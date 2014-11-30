@@ -14,12 +14,12 @@ class Othello
 # }}}
 
 # Input {{{
-class InputType
+class InputInterface
 
-class Keyboard extends InputType
+class Keyboard extends InputInterface
   constructor: ->
 
-class Mouse extends InputType
+class Mouse extends InputInterface
   constructor: ->
 # }}}
 
