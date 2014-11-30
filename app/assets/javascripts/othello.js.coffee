@@ -1,12 +1,16 @@
 # Othello {{{
+
 class Othello
   constructor: ->
-    @judge = Judge.new('normal')   # TODO:htmlの要素から選択できるように
-    @outputer = OutputText.new
-    @board = Board.new(@judge.rule.b_width, @judge.rule.height)
+    @judge = new Judge('normal')   # TODO:htmlの要素から選択できるように
+    @outputer = new OutputText
+    @board = new Board(@judge.rule.b_height, @judge.rule.b_width)
+    @board.init_board
+    @player = []
+    for k in [0..@judge.rule.player_num]
+      @player[k] = new Player
   run: ->
-    @board.show_board
-
+    @outputer.show_board(@board)
 # }}}
 
 # Input {{{
@@ -14,15 +18,15 @@ class InputType
 
 class Keyboard extends InputType
   constructor: ->
-    null
 
 class Mouse extends InputType
   constructor: ->
-    null
 # }}}
 
 # Output {{{
 class OutputType
+  @show_board: (board) ->
+  @show_piece: (piece) ->
 
 class OutputImage extends OutputType
   ## field
@@ -30,21 +34,22 @@ class OutputImage extends OutputType
   @width
   @height
   constructor: ->
-    null
 
 class OutputText extends OutputType
   constructor: ->
 
-  @show_board: (board) ->
-    # TODO:board.lengthを使う
+  show_piece: (piece) ->
+    # console.log('・') unless piece?
+    white = new Piece(0)
+    black = new Piece(1)
+    console.log('白') if piece == white
+    console.log('黒') if piece == black
+
+  show_board: (board) ->
     for x in [0..8]
       for y in [0..8]
-        this.show_piece(board[x][y].piace)
+        @show_piece(board.cells.piace)
 
-  show_piece: (piece) ->
-    console.debug('・') if piece == null
-    console.debug('黒') if piece == 'black'
-    console.debug('白') if piece == 'white'
 # }}}
 
 # Player {{{
@@ -53,14 +58,17 @@ class Player
   @order
   @Piece
   constructor: ->
-    null
+
   ## method
-  dicide_hand: (x, y)->
+  @dicide_hand: ->
 
 class User extends Player
   ## method
-  constructor: () ->
+  constructor: (piece_num, order) ->
     null
+
+  @dicide_hand: ->
+    [x, y]
 
 class Computer extends Player
   constructor: () ->
@@ -69,8 +77,19 @@ class Computer extends Player
 
 # Board {{{
 class Board
-  constructor: (width, height) ->
-    @cells = Cell[height][width].new
+  constructor: (height, width) ->
+    _height = height
+    _width = width
+    @cells = [0..height][0..width]
+    for line in @cells
+      for cell in line
+        @cells[line][cell] = new Cell
+
+  init_board: ->
+    x = _height/2 - 1
+    y = _width/2
+    @cells[x][x].piace = @cells[y][y] = new Piece(0)
+    @cells[x][y].piace = @cells[y][x] = new Piece(1)
 
 class Cell
   constructor: ->
@@ -78,16 +97,17 @@ class Cell
 
 class Piece
   constructor: (order) ->
-    @color = white if order == 0
-    @color = black if order == 1
-    null
+    @color = Color.colors[order]
+
+class Color
+  @colors = ['black', 'white', 'blue', 'red']
 # }}}
 
 # Judge {{{
 class Judge
   constructor: (type)->
     if type == 'normal'
-      @rule = NormalRule.new
+      @rule = new NormalRule
 
 class Rule
   @b_width
@@ -102,6 +122,4 @@ class NormalRule extends Rule
     @piece_num = @b_width * @b_height
 # }}}
 
-othello = Othello.new
-othello.run
-
+@othello = new Othello
