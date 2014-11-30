@@ -1,5 +1,4 @@
 # Othello {{{
-
 class Othello
   constructor: ->
     # TODO:htmlの要素からルールを選択できるように
@@ -9,10 +8,11 @@ class Othello
     # TODO:htmlの要素からプレイヤーを選択できるように
     p_num = @judge.rule.user_piece_num
     @player = [new User(p_num, 0), new User(p_num, 1)]
+
   run: ->
     @outputer.show_board(@board)
     # QUESTION:イベントハンドラはここで呼ばないと動かない？
-    @player[0].inputer.select_piece_listener()
+    @player[0].inputer.put_piece(@board.cells, @player[0].piece)
 # }}}
 
 # Input {{{
@@ -24,13 +24,15 @@ class Ai extends InputInterface
 
 class Mouse extends InputInterface
   constructor: ->
-  select_piece_listener: ->
+
+  put_piece: (cells, piece)->
     outputer = new Html
     pieces = $('.piece')
     $.each pieces, ->
       $(this).on 'click', ->
-        @pos = [this.id[0], this.id[2]]
-        outputer.animation(@pos)
+        [x, y] = [this.id[0], this.id[2]]
+        cells[x][y].piece = piece
+        outputer.change_color($(this), piece.color)
 # }}}
 
 # Output {{{
@@ -71,6 +73,13 @@ class Html extends OutputInterface
     id = '#' + pos[0] + '_' + pos[1]
     $(id).fadeTo(100, 0.5)
 
+  change_color: (content, color) ->
+    content.removeClass "void"
+    for c in Color.colors
+      content.removeClass(c)
+    content.addClass(color)
+
+
   _calc_pos: (pos) ->
     x = pos[0] * @image_size
     y = pos[1] * @image_size
@@ -91,6 +100,7 @@ class Player
 class User extends Player
   constructor: (piece_num, order) ->
     @inputer   = new Mouse
+    @piece     = new Piece(order)
     @piece_num = piece_num
     @order     = order
   decide_hand: ->
@@ -98,8 +108,6 @@ class User extends Player
 class Cpu extends Player
   constructor: (piece_num, order) ->
     @inputer   = new Ai
-    @piece_num = piece_num
-    @order     = order
 
 # }}}
 
@@ -141,11 +149,45 @@ class Judge
     if type == 'normal'
       @rule = new NormalRule
 
+  is_puttable: (pos, board)->
+    return false unless @rule.is_inboard(pos)
+    false if @rule.is_putted(pos, board)
+
+  reverse: (pos, board, piece) ->
+    for i in [-1..1]
+      for j in [-1..1]
+        continue if i == j
+        this._reverse_piece(pos, [i, j], board.cells, piece)
+
+  _reverse_piece: (pos, dir, cells, piece) ->
+    [px, py] = pos
+    [x, y] = dir
+    loop
+      [px, py] = [px+x, py+y]
+      return false unless @rule.is_inboard(pos)
+      target = cells[px][py].piece
+      # 対象セルが空でなくて自分自身じゃないとき繰り返す
+      break if target != new Piece(-1) and target != piece
+    cells[pos[0]][pos[1]].piece = piece
+    target = cells[px][py].piece
+    if target == piece
+      loop
+        cells[pos[0]][pos[1]].piece = piece
+        pos = [pos[0]+x, pos[1]+y]
+        break if pos[0] == px and pos[1] == py
+
+
 class Rule
   @b_width
   @b_height
   @player_num
   @piece_num
+
+  is_in_board: (pos) ->
+    [x, y] = pos
+    return x >= 0 && x < @rule.b_height && y >= 0 && y < @rule.b_width
+
+  is_putted: (pos, board) ->
 
 class NormalRule extends Rule
   constructor: ->
@@ -153,6 +195,11 @@ class NormalRule extends Rule
     @player_num = 2
     @piece_num = @b_width * @b_height
     @user_piece_num = @piece_num / @player_num
+
+  is_putted: (pos, board) ->
+    [x, y] = pos
+    return true if board.cells[x][y] != new Cell
+
 # }}}
 
 @othello = new Othello
