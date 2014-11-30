@@ -143,19 +143,32 @@ class Judge
       @rule = new NormalRule
 
   is_puttable: (pos, board)->
-    return false unless this._is_inboard(pos)
-    false if this._is_putted(pos, board)
+    return false unless @rule.is_inboard(pos)
+    false if @rule.is_putted(pos, board)
 
-  reverse_piece: (pos, board) ->
-    [x, y] = pos
+  reverse: (pos, board, piece) ->
+    for i in [-1..1]
+      for j in [-1..1]
+        continue if i == j
+        this._reverse_piece(pos, [i, j], board.cells, piece)
 
-  _is_in_board: (pos) ->
-    [x, y] = pos
-    return x >= 0 && x < @rule.b_height && y >= 0 && y < @rule.b_width
+  _reverse_piece: (pos, dir, cells, piece) ->
+    [px, py] = pos
+    [x, y] = dir
+    loop
+      [px, py] = [px+x, py+y]
+      return false unless @rule.is_inboard(pos)
+      target = cells[px][py].piece
+      # 対象セルが空でなくて自分自身じゃないとき繰り返す
+      break if target != new Piece(-1) and target != piece
+    cells[pos[0]][pos[1]].piece = piece
+    target = cells[px][py].piece
+    if target == piece
+      loop
+        cells[pos[0]][pos[1]].piece = piece
+        pos = [pos[0]+x, pos[1]+y]
+        break if pos[0] == px and pos[1] == py
 
-  _is_putted: (pos, board) ->
-    [x, y] = pos
-    return true if board.cells[x][y] != new Cell
 
 class Rule
   @b_width
@@ -163,12 +176,23 @@ class Rule
   @player_num
   @piece_num
 
+  is_in_board: (pos) ->
+    [x, y] = pos
+    return x >= 0 && x < @rule.b_height && y >= 0 && y < @rule.b_width
+
+  is_putted: (pos, board) ->
+
 class NormalRule extends Rule
   constructor: ->
     @b_width = @b_height = 8
     @player_num = 2
     @piece_num = @b_width * @b_height
     @user_piece_num = @piece_num / @player_num
+
+  is_putted: (pos, board) ->
+    [x, y] = pos
+    return true if board.cells[x][y] != new Cell
+
 # }}}
 
 @othello = new Othello
