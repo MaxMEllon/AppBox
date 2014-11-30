@@ -3,11 +3,10 @@
 class Othello
   constructor: ->
     @judge = new Judge('normal')   # TODO:htmlの要素から選択できるように
-    # @outputer = new Html
-    @outputer = new Console
+    @outputer = new Html(@judge.rule.piece_num)
     @board = new Board(@judge.rule.b_height, @judge.rule.b_width)
     @player = []
-    for k in [0..@judge.rule.player_num]
+    for k in [0...@judge.rule.player_num]
       @player[k] = new Player
   run: ->
     @outputer.show_board(@board)
@@ -25,39 +24,53 @@ class Mouse extends InputInterface
 
 # Output {{{
 class OutputInterface
+  show_piece: (piece, pos) ->
+
   show_board: (board) ->
     height = board.cells.length
     width =  board.cells[0].length
     for x in [0...height]
       for y in [0...width]
-        @show_piece(board.cells[x][y].piece)
-
-  show_piece: (piece) ->
+        pos = [x, y]
+        @show_piece(board.cells[x][y].piece, pos)
 
   _get_piece_type: (piece) ->
-    color = '・' if piece.color == new Piece(-1).color
-    color = '白' if piece.color == new Piece(0).color
-    color = '黒' if piece.color == new Piece(1).color
+    color = 'void'  if piece.color == new Piece(-1).color
+    color = 'white' if piece.color == new Piece(0).color
+    color = 'black' if piece.color == new Piece(1).color
     color
 
-
 class Html extends OutputInterface
-  constructor: ->
 
-  show_piece: (piece) =>
-    view = this._get_piece_type(piece)
-    $('div#othello')
-      .append('<p>')
-      .append(view)
+  constructor: (piece_num = 8) ->
+    @window_size = piece_num * this._image_size
+    _image_size = 50
 
+  show_piece: (piece, pos) =>
+    [x, y] = this._calc_pos(pos)
+    color = this._get_piece_type(piece)
+    $("<div class=\"piece #{color}\" id=#{x}_#{y}>")
+      .css({
+        backgroundPosition: '-' + x + 'px -' + y + 'px',
+        top : x + 'px',
+        left: y + 'px'
+      })
+      .appendTo($('div#othello'))
+
+  _calc_pos: (pos) ->
+    x = pos[0] * this._image_size
+    y = pos[1] * this._image_size
+    x = pos[0] * 50
+    y = pos[1] * 50
+    console.debug(pos[0], pos[1], x, y, this._image_size)
+    [x, y]
 
 class Console extends OutputInterface
   constructor: ->
 
-  show_piece: (piece) ->
+  show_piece: (piece, pos) ->
     view = this._get_piece_type(piece)
     console.debug(view)
-
 # }}}
 
 # Player {{{

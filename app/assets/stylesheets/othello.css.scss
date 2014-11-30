@@ -3,22 +3,21 @@
 // You can use Sass (SCSS) here: http://sass-lang.com/
 
 div#othello {
-  background-color: #333;
   width: 400px;
   height: 400px;
-  .piece#black {
+  border: solid 1px;
+  .piece {
     width: 50px;
     height: 50px;
-    position: absolute
-  }
-  .piece#white {
-    width: 50px;
-    height: 50px;
-    position: absolute
-  }
-  .piece#void {
-    width: 50px;
-    height: 50px;
-    position: absolute
+    position: absolute;
+    &.black {
+      background-image: image-url("black.jpg");
+    }
+    &.white {
+      background-image: image-url("white.jpg");
+    }
+    &.void {
+      background-image: image-url("void.jpg");
+    }
   }
 }
