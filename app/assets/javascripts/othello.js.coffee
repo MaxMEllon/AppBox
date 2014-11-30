@@ -2,24 +2,35 @@
 
 class Othello
   constructor: ->
-    @judge = new Judge('normal')   # TODO:htmlの要素から選択できるように
-    @outputer = new Html(@judge.rule.piece_num)
-    @board = new Board(@judge.rule.b_height, @judge.rule.b_width)
-    @player = []
-    for k in [0...@judge.rule.player_num]
-      @player[k] = new Player
+    # TODO:htmlの要素からルールを選択できるように
+    @judge     = new Judge('normal')
+    @outputer  = new Html(@judge.rule.piece_num)
+    @board     = new Board(@judge.rule.b_height, @judge.rule.b_width)
+    # TODO:htmlの要素からプレイヤーを選択できるように
+    p_num = @judge.rule.user_piece_num
+    @player = [new User(p_num, 0), new User(p_num, 1)]
   run: ->
     @outputer.show_board(@board)
+    # QUESTION:イベントハンドラはここで呼ばないと動かない？
+    @player[0].inputer.select_piece_listener()
 # }}}
 
 # Input {{{
 class InputInterface
 
-class Keyboard extends InputInterface
+class Ai extends InputInterface
   constructor: ->
+  select_piece_listener: ->
 
 class Mouse extends InputInterface
   constructor: ->
+  select_piece_listener: ->
+    outputer = new Html
+    pieces = $('.piece')
+    $.each pieces, ->
+      $(this).on 'click', ->
+        @pos = [this.id[0], this.id[2]]
+        outputer.animation(@pos)
 # }}}
 
 # Output {{{
@@ -31,8 +42,7 @@ class OutputInterface
     width =  board.cells[0].length
     for x in [0...height]
       for y in [0...width]
-        pos = [x, y]
-        @show_piece(board.cells[x][y].piece, pos)
+        @show_piece(board.cells[x][y].piece, [x, y])
 
   _get_piece_type: (piece) ->
     color = 'void'  if piece.color == new Piece(-1).color
@@ -44,12 +54,12 @@ class Html extends OutputInterface
 
   constructor: (piece_num = 8) ->
     @window_size = piece_num * this._image_size
-    _image_size = 50
+    @image_size = 50
 
   show_piece: (piece, pos) =>
     [x, y] = this._calc_pos(pos)
     color = this._get_piece_type(piece)
-    $("<div class=\"piece #{color}\" id=#{x}_#{y}>")
+    $("<div class=\"piece #{color}\" id=#{pos[0]}_#{pos[1]}>")
       .css({
         backgroundPosition: '-' + x + 'px -' + y + 'px',
         top : x + 'px',
@@ -57,12 +67,13 @@ class Html extends OutputInterface
       })
       .appendTo($('div#othello'))
 
+  animation: (pos) ->
+    id = '#' + pos[0] + '_' + pos[1]
+    $(id).fadeTo(100, 0.5)
+
   _calc_pos: (pos) ->
-    x = pos[0] * this._image_size
-    y = pos[1] * this._image_size
-    x = pos[0] * 50
-    y = pos[1] * 50
-    console.debug(pos[0], pos[1], x, y, this._image_size)
+    x = pos[0] * @image_size
+    y = pos[1] * @image_size
     [x, y]
 
 class Console extends OutputInterface
@@ -70,30 +81,26 @@ class Console extends OutputInterface
 
   show_piece: (piece, pos) ->
     view = this._get_piece_type(piece)
-    console.debug(view)
+    console.debug("[#{pos[0]}:#{pos[1]}]#{view}")
 # }}}
 
 # Player {{{
 class Player
-  ## field
-  @order
-  @piece
-  constructor: ->
-
-  ## method
-  @dicide_hand: ->
+  decide_hand: ->
 
 class User extends Player
-  ## method
   constructor: (piece_num, order) ->
-    null
+    @inputer   = new Mouse
+    @piece_num = piece_num
+    @order     = order
+  decide_hand: ->
 
-  @dicide_hand: ->
-    [x, y]
+class Cpu extends Player
+  constructor: (piece_num, order) ->
+    @inputer   = new Ai
+    @piece_num = piece_num
+    @order     = order
 
-class Computer extends Player
-  constructor: () ->
-    null
 # }}}
 
 # Board {{{
@@ -104,15 +111,16 @@ class Board
     cell = new Cell
     black = new Cell(0)
     white = new Cell(1)
+    # TODO: 頭のいい初期化の方法に変えたい
     @cells =
-      [[cell, cell, cell, cell, cell, cell, cell, cell]
-      [cell, cell, cell, cell, cell, cell, cell, cell]
-      [cell, cell, cell, cell, cell, cell, cell, cell]
-      [cell, cell, cell, white, black, cell, cell, cell]
-      [cell, cell, cell, black, white, cell, cell, cell]
-      [cell, cell, cell, cell, cell, cell, cell, cell]
-      [cell, cell, cell, cell, cell, cell, cell, cell]
-      [cell, cell, cell, cell, cell, cell, cell, cell]]
+      [[cell, cell, cell, cell,  cell,  cell, cell, cell]
+       [cell, cell, cell, cell,  cell,  cell, cell, cell]
+       [cell, cell, cell, cell,  cell,  cell, cell, cell]
+       [cell, cell, cell, white, black, cell, cell, cell]
+       [cell, cell, cell, black, white, cell, cell, cell]
+       [cell, cell, cell, cell,  cell,  cell, cell, cell]
+       [cell, cell, cell, cell,  cell,  cell, cell, cell]
+       [cell, cell, cell, cell,  cell,  cell, cell, cell]]
 
 class Cell
   constructor: (order = -1)->
@@ -144,6 +152,7 @@ class NormalRule extends Rule
     @b_width = @b_height = 8
     @player_num = 2
     @piece_num = @b_width * @b_height
+    @user_piece_num = @piece_num / @player_num
 # }}}
 
 @othello = new Othello
