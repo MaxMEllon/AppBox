@@ -3,9 +3,9 @@
 class Othello
   constructor: ->
     @judge = new Judge('normal')   # TODO:htmlの要素から選択できるように
-    @outputer = new OutputText
+    # @outputer = new Html
+    @outputer = new Console
     @board = new Board(@judge.rule.b_height, @judge.rule.b_width)
-    @board.init_board
     @player = []
     for k in [0..@judge.rule.player_num]
       @player[k] = new Player
@@ -24,31 +24,39 @@ class Mouse extends InputType
 # }}}
 
 # Output {{{
-class OutputType
-  @show_board: (board) ->
-  @show_piece: (piece) ->
+class OutputInterface
+  show_board: (board) ->
+    height = board.cells.length
+    width =  board.cells[0].length
+    for x in [0...height]
+      for y in [0...width]
+        @show_piece(board.cells[x][y].piece)
 
-class OutputImage extends OutputType
-  ## field
-  # image_size
-  @width
-  @height
+  show_piece: (piece) ->
+
+  _get_piece_type: (piece) ->
+    color = '・' if piece.color == new Piece(-1).color
+    color = '白' if piece.color == new Piece(0).color
+    color = '黒' if piece.color == new Piece(1).color
+    color
+
+
+class Html extends OutputInterface
   constructor: ->
 
-class OutputText extends OutputType
+  show_piece: (piece) =>
+    view = this._get_piece_type(piece)
+    $('div#othello')
+      .append('<p>')
+      .append(view)
+
+
+class Console extends OutputInterface
   constructor: ->
 
   show_piece: (piece) ->
-    # console.log('・') unless piece?
-    white = new Piece(0)
-    black = new Piece(1)
-    console.log('白') if piece == white
-    console.log('黒') if piece == black
-
-  show_board: (board) ->
-    for x in [0..8]
-      for y in [0..8]
-        @show_piece(board.cells.piace)
+    view = this._get_piece_type(piece)
+    console.debug(view)
 
 # }}}
 
@@ -56,7 +64,7 @@ class OutputText extends OutputType
 class Player
   ## field
   @order
-  @Piece
+  @piece
   constructor: ->
 
   ## method
@@ -80,27 +88,30 @@ class Board
   constructor: (height, width) ->
     _height = height
     _width = width
-    @cells = [0..height][0..width]
-    for line in @cells
-      for cell in line
-        @cells[line][cell] = new Cell
-
-  init_board: ->
-    x = _height/2 - 1
-    y = _width/2
-    @cells[x][x].piace = @cells[y][y] = new Piece(0)
-    @cells[x][y].piace = @cells[y][x] = new Piece(1)
+    cell = new Cell
+    black = new Cell(0)
+    white = new Cell(1)
+    @cells =
+      [[cell, cell, cell, cell, cell, cell, cell, cell]
+      [cell, cell, cell, cell, cell, cell, cell, cell]
+      [cell, cell, cell, cell, cell, cell, cell, cell]
+      [cell, cell, cell, white, black, cell, cell, cell]
+      [cell, cell, cell, black, white, cell, cell, cell]
+      [cell, cell, cell, cell, cell, cell, cell, cell]
+      [cell, cell, cell, cell, cell, cell, cell, cell]
+      [cell, cell, cell, cell, cell, cell, cell, cell]]
 
 class Cell
-  constructor: ->
-    @piece = null
+  constructor: (order = -1)->
+    @piece = new Piece(order)
 
 class Piece
   constructor: (order) ->
+    return @color = 'void' if order == -1
     @color = Color.colors[order]
 
 class Color
-  @colors = ['black', 'white', 'blue', 'red']
+  @colors = ['white', 'black', 'blue', 'red']
 # }}}
 
 # Judge {{{
