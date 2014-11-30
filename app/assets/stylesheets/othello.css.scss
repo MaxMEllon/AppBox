@@ -13,13 +13,13 @@ div#othello {
     height: 50px;
     position: absolute;
     &.black {
-      background-image: image-url("black.jpg");
+      background-image: image-url("othello/black.jpg");
     }
     &.white {
-      background-image: image-url("white.jpg");
+      background-image: image-url("othello/white.jpg");
     }
     &.void {
-      background-image: image-url("void.jpg");
+      background-image: image-url("othello/void.jpg");
     }
   }
 }
