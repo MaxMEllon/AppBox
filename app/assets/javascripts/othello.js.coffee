@@ -1,5 +1,4 @@
 # Othello {{{
-
 class Othello
   constructor: ->
     # TODO:htmlの要素からルールを選択できるように
@@ -9,6 +8,7 @@ class Othello
     # TODO:htmlの要素からプレイヤーを選択できるように
     p_num = @judge.rule.user_piece_num
     @player = [new User(p_num, 0), new User(p_num, 1)]
+
   run: ->
     @outputer.show_board(@board)
     # QUESTION:イベントハンドラはここで呼ばないと動かない？
@@ -24,6 +24,7 @@ class Ai extends InputInterface
 
 class Mouse extends InputInterface
   constructor: ->
+
   select_piece_listener: ->
     outputer = new Html
     pieces = $('.piece')
@@ -140,6 +141,21 @@ class Judge
   constructor: (type)->
     if type == 'normal'
       @rule = new NormalRule
+
+  is_puttable: (pos, board)->
+    return false unless this._is_inboard(pos)
+    false if this._is_putted(pos, board)
+
+  reverse_piece: (pos, board) ->
+    [x, y] = pos
+
+  _is_in_board: (pos) ->
+    [x, y] = pos
+    return x >= 0 && x < @rule.b_height && y >= 0 && y < @rule.b_width
+
+  _is_putted: (pos, board) ->
+    [x, y] = pos
+    return true if board.cells[x][y] != new Cell
 
 class Rule
   @b_width
