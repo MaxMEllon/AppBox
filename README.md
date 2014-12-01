@@ -1,4 +1,4 @@
-# coffee-scriptの練習アプリをまとめるrailsアプリ
+# coffee-scriptのアプリをまとめるrailsアプリ
 
 - 作成中のもの
     - オセロ
