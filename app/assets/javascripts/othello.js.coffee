@@ -120,7 +120,6 @@ class Cpu extends Player
     @inputer   = new Ai
 
 # }}}
-
 # Board オセロの各マス目を生成するクラス {{{
 class Board
   constructor: (height, width) ->
@@ -180,31 +179,32 @@ class Judge
     outputer = new Html # TODO: 仮
 
     ## TODO: メソッドを分割する
-    ##--------------------------------
+    ## Rule.is_reverseble へ ----------
     # 対岸のpieceの探索
     loop
       [px, py] = [px+x, py+y]
       # 空白または範囲外で中止
       return false unless @rule.is_inboard [px, py]
       return false if cells[px][py].piece.color == 'void'
+      reverseble_flag = true if cells[px][py].piece.color != piece.color
       target = cells[px][py].piece
       # 自分自身のピースと衝突で探索打切
       break if target.color == piece.color
     ##--------------------------------
     # 打切したときのマスが自分自身なら裏返し処理実行
     goal = cells[px][py].piece.color
-    if goal == piece.color
+    if flag and goal == piece.color
       loop
         console.debug [hx, hy], cells[hx][hy].piece, piece
         cells[hx][hy].piece = piece
-        # TODO: ここで描画処理を呼びたくない(関連を減らすために?)
+        ## TODO: ここで描画処理を呼びたくない(関連を減らすために?) {{{
         id = '#' + hx + '_' + hy
         console.debug id
         outputer.change_color $(id), piece.color
+        ##-------------------------------------------------------- }}}
         [hx, hy] = [hx+x, hy+y]
         break if hx == px and hy == py
     ##--------------------------------
-
 # }}}
 
 # Rule: ボードを操作する際に必要な条件を持つクラス {{{
