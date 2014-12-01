@@ -11,6 +11,7 @@ class Othello
 
   run: ->
     @outputer.show_board @board
+    # TODO: 交互に呼びたい(0番プレーヤが終わったら1番プレーヤへ)
     @players[0].put_piece()
 # }}}
 
@@ -106,6 +107,7 @@ class User extends Player
     pieces = $('.piece')
     for piece in pieces
       piece.onclick = (e) =>
+        e.preventDefault  # よく理解していない 親オブジェクトのイベント中止？
         pos = @_pos2int [e.target.id[0], e.target.id[2]]
         @inputer.input pos, @piece
 
@@ -126,8 +128,8 @@ class Board
     _height = height
     _width = width
     cell = new Cell
-    black = new Cell(0)
-    white = new Cell(1)
+    white = new Cell(0)
+    black = new Cell(1)
 
     # TODO: 頭のいい初期化の方法に変えたい
     #     : 本来ならボードの初期形状はルールに依存するべきでは?
@@ -142,6 +144,7 @@ class Board
        [cell, cell, cell, cell,  cell,  cell, cell, cell]
        [cell, cell, cell, cell,  cell,  cell, cell, cell]
        [cell, cell, cell, cell,  cell,  cell, cell, cell]]
+
 # Cell: オセロのマスを生成するクラス,置かれているピースの情報を知っている {{{
 class Cell
   constructor: (order = -1)->
@@ -177,7 +180,7 @@ class Judge
     [hx, hy] = [px, py] = pos
     [x, y] = dir
     outputer = new Html # TODO: 仮
-
+    debug = new Debug
     ## TODO: メソッドを分割する
     ## Rule.is_reverseble へ ----------
     # 対岸のpieceの探索
@@ -192,10 +195,12 @@ class Judge
       break if target.color == piece.color
     ##--------------------------------
     # 打切したときのマスが自分自身なら裏返し処理実行
-    goal = cells[px][py].piece.color
-    if reverseble_flag and goal == piece.color
+    end = cells[px][py].piece.color
+    debug.board cells
+    if reverseble_flag and end == piece.color
       loop
         console.debug [hx, hy], cells[hx][hy].piece, piece
+        # TODO: ここで代入するとcell全体にピースが置かれてしまう
         cells[hx][hy].piece = piece
         ## TODO: ここで描画処理を呼びたくない(関連を減らすために?) {{{
         id = '#' + hx + '_' + hy
@@ -220,7 +225,9 @@ class Rule
     return false unless @is_inboard(pos)
     return false if @is_putted(pos, @board.cells[x][y])
     true
-  is_putted: (pos, board) ->
+  is_putted: (pos, cell) ->
+    [x, y] = pos
+    cell.piece.color != 'void'
   is_inboard: (pos) ->
     [x, y] = pos
     return x >= 0 && x < @b_height && y >= 0 && y < @b_width
@@ -233,17 +240,15 @@ class NormalRule extends Rule
     @piece_num = @b_width * @b_height
     @user_piece_num = @piece_num / @player_num
     @board = board
-
-  is_putted: (pos, cell) ->
-    [x, y] = pos
-    cell.piece.color != 'void'
-
-  is_reverseble: (pos, board) ->
 # }}}
 
 # Debug: pending {{{
 class Debug
-  # TODO: デバッグの操作を記述
+  constructor: () ->
+  board: (cells) ->
+    for line in cells
+      for cell in line
+        console.debug cell.piece.color
 # }}}
 
 @othello = new Othello
