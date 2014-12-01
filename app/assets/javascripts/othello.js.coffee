@@ -27,9 +27,9 @@ class Mouse extends InputInterface
     @judge = judge
     @outputer  = new Html judge
 
-  input: (pos)->
+  input: (pos, piece)->
     console.debug pos
-    @judge.reverse pos, new Piece(0)
+    @judge.reverse pos
 
 # }}}
 
@@ -57,8 +57,8 @@ class Html extends OutputInterface
     @judge = judge
 
   show_cell: (piece, pos) =>
-    [x, y] = this._calc_pos pos
-    color = this._get_piece_type piece
+    [x, y] = @_calc_pos pos
+    color = @_get_piece_type piece
     $("<div class=\"piece #{color}\" id=#{pos[0]}_#{pos[1]}>")
       .css({
         backgroundPosition: '-' + x + 'px -' + y + 'px',
@@ -102,10 +102,20 @@ class User extends Player
 
   put_piece: ()->
     pieces = $('.piece')
-    $.each pieces, ->
-      $(this).on 'click', =>
-        pos = [this.id[0], this.id[2]]
-        @inputer.click pos
+    for piece in pieces
+      piece.onclick = (e) =>
+        pos = [piece.id[0], piece.id[2]]
+        @inputer.input pos, @piece
+        # TODO: posが[height-1, width-1]になる
+        #     : 例えば，idが1_3の要素をクリックしても
+        #     : posが[7, 7]になる
+        console.debug pos, @piece
+
+    #--- _thisへの退避がおかしくにアクセス出来ない例
+    # $.each pieces, ->
+    #   $(@).on 'click', =>
+    #     pos = [@id[0], @id[2]]
+    #     @inputer.click pos, @piece
 
 class Cpu extends Player
   constructor: (piece_num, order) ->
@@ -215,7 +225,6 @@ class NormalRule extends Rule
     return x >= 0 && x < @b_height && y >= 0 && y < @b_width
 
   is_reverseble: (pos, board) ->
-
 # }}}
 
 class Debug
