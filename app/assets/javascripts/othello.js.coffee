@@ -32,7 +32,7 @@ class Mouse extends InputInterface
 
 # }}}
 
-# Output オセロはこのクラスを用いて出力をする{{{
+# Output オセロはこのクラスを用いて出力をする {{{
 class OutputInterface
   show_cell: (piece, pos) ->
 
@@ -216,6 +216,10 @@ class Rule
   @user_piece_num
 
   is_puttable: (pos)->
+    [x, y] = pos
+    return false unless @is_inboard(pos)
+    return false if @is_putted(pos, @board.cells[x][y])
+    true
   is_putted: (pos, board) ->
   is_inboard: (pos) ->
     [x, y] = pos
@@ -229,12 +233,6 @@ class NormalRule extends Rule
     @piece_num = @b_width * @b_height
     @user_piece_num = @piece_num / @player_num
     @board = board
-
-  is_puttable: (pos)->
-    [x, y] = pos
-    return false unless @is_inboard(pos)
-    return false if @is_putted(pos, @board.cells[x][y])
-    true
 
   is_putted: (pos, cell) ->
     [x, y] = pos
