@@ -7,10 +7,11 @@ class Othello
     @judge     = new Judge @rule, @board
     @outputer  = new Html @judge
     # TODO:htmlの要素からプレイヤーを選択できるように
-    @player = [new User(@judge, 0), new User(@judge, 1)]
+    @players = [new User(@judge, 0), new User(@judge, 1)]
 
   run: ->
     @outputer.show_board @board
+    @players[0].put_piece()
 
 # }}}
 
@@ -26,22 +27,22 @@ class Mouse extends InputInterface
     @judge = judge
     @outputer  = new Html judge
 
-  input: (pos)->
+  input: (pos, piece)->
     console.debug pos
-    @judge.reverse pos, new Piece(0)
+    @judge.reverse pos
 
 # }}}
 
 # Output {{{
 class OutputInterface
-  show_piece: (piece, pos) ->
+  show_cell: (piece, pos) ->
 
   show_board: (board) ->
     height = board.cells.length
     width =  board.cells[0].length
     for x in [0...height]
       for y in [0...width]
-        @show_piece board.cells[x][y].piece, [x, y]
+        @show_cell board.cells[x][y].piece, [x, y]
 
   _get_piece_type: (piece) ->
     color = 'void'  if piece.color == new Piece(-1).color
@@ -55,18 +56,15 @@ class Html extends OutputInterface
     @image_size = 50
     @judge = judge
 
-  show_piece: (piece, pos) =>
-    inputer = new Mouse @judge # TODO: 仮
-    [x, y] = this._calc_pos pos
-    color = this._get_piece_type piece
+  show_cell: (piece, pos) =>
+    [x, y] = @_calc_pos pos
+    color = @_get_piece_type piece
     $("<div class=\"piece #{color}\" id=#{pos[0]}_#{pos[1]}>")
       .css({
         backgroundPosition: '-' + x + 'px -' + y + 'px',
         top : x + 'px',
         left: y + 'px'
       })
-      .on 'click', ->
-        inputer.input pos
       .appendTo $('div#othello')
 
   animation: (pos) ->
@@ -87,21 +85,37 @@ class Html extends OutputInterface
 class Console extends OutputInterface
   constructor: ->
 
-  show_piece: (piece, pos) ->
+  show_cell: (piece, pos) ->
     view = this._get_piece_type piece
     console.debug "[#{pos[0]}:#{pos[1]}]#{view}"
 # }}}
 
 # Player {{{
 class Player
-  decide_hand: ->
+  put_piece: ->
 
 class User extends Player
   constructor: (judge, order) ->
     @inputer   = new Mouse judge
     @piece     = new Piece order
     @order     = order
-  decide_hand: ()->
+
+  put_piece: ()->
+    pieces = $('.piece')
+    for piece in pieces
+      piece.onclick = (e) =>
+        pos = [piece.id[0], piece.id[2]]
+        @inputer.input pos, @piece
+        # TODO: posが[height-1, width-1]になる
+        #     : 例えば，idが1_3の要素をクリックしても
+        #     : posが[7, 7]になる
+        console.debug pos, @piece
+
+    #--- _thisへの退避がおかしくにアクセス出来ない例
+    # $.each pieces, ->
+    #   $(@).on 'click', =>
+    #     pos = [@id[0], @id[2]]
+    #     @inputer.click pos, @piece
 
 class Cpu extends Player
   constructor: (piece_num, order) ->
@@ -211,7 +225,6 @@ class NormalRule extends Rule
     return x >= 0 && x < @b_height && y >= 0 && y < @b_width
 
   is_reverseble: (pos, board) ->
-
 # }}}
 
 class Debug
