@@ -1,4 +1,4 @@
-#t Othello {{{
+# Othello {{{
 class Othello
   constructor: ->
     # TODO:htmlの要素からルールを選択できるように
@@ -11,7 +11,7 @@ class Othello
 
   run: ->
     @outputer.show_board @board
-    @players[0].decide_hand()
+    @players[0].put_piece()
 
 # }}}
 
@@ -35,14 +35,14 @@ class Mouse extends InputInterface
 
 # Output {{{
 class OutputInterface
-  show_piece: (piece, pos) ->
+  show_cell: (piece, pos) ->
 
   show_board: (board) ->
     height = board.cells.length
     width =  board.cells[0].length
     for x in [0...height]
       for y in [0...width]
-        @show_piece board.cells[x][y].piece, [x, y]
+        @show_cell board.cells[x][y].piece, [x, y]
 
   _get_piece_type: (piece) ->
     color = 'void'  if piece.color == new Piece(-1).color
@@ -56,7 +56,7 @@ class Html extends OutputInterface
     @image_size = 50
     @judge = judge
 
-  show_piece: (piece, pos) =>
+  show_cell: (piece, pos) =>
     [x, y] = this._calc_pos pos
     color = this._get_piece_type piece
     $("<div class=\"piece #{color}\" id=#{pos[0]}_#{pos[1]}>")
@@ -85,14 +85,14 @@ class Html extends OutputInterface
 class Console extends OutputInterface
   constructor: ->
 
-  show_piece: (piece, pos) ->
+  show_cell: (piece, pos) ->
     view = this._get_piece_type piece
     console.debug "[#{pos[0]}:#{pos[1]}]#{view}"
 # }}}
 
 # Player {{{
 class Player
-  decide_hand: ->
+  put_piece: ->
 
 class User extends Player
   constructor: (judge, order) ->
@@ -100,7 +100,7 @@ class User extends Player
     @piece     = new Piece order
     @order     = order
 
-  decide_hand: ()->
+  put_piece: ()->
     pieces = $('.piece')
     $.each pieces, ->
       $(this).on 'click', =>
