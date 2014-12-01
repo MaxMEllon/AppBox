@@ -2,17 +2,16 @@
 class Othello
   constructor: ->
     # TODO:htmlの要素からルールを選択できるように
-    @rule      = new NormalRule
-    @board     = new Board @rule.b_height, @rule.b_width
+    @board     = new Board 8, 8   # TODO: マジックナンバーの削除
+    @rule      = new NormalRule @board
     @judge     = new Judge @rule, @board
-    @outputer  = new Html @judge
+    @outputer  = new Html
     # TODO:htmlの要素からプレイヤーを選択できるように
     @players = [new User(@judge, 0), new User(@judge, 1)]
 
   run: ->
     @outputer.show_board @board
     @players[0].put_piece()
-
 # }}}
 
 # InputInterface ユーザはこのクラスを用いて座標の入力をする{{{
@@ -25,11 +24,11 @@ class Ai extends InputInterface
 class Mouse extends InputInterface
   constructor: (judge)->
     @judge = judge
-    @outputer  = new Html judge
 
   input: (pos, piece)->
-    console.debug pos
-    @judge.reverse pos
+    console.debug pos, piece
+    if @judge.rule.is_puttable pos
+      @judge.reverse pos, piece
 
 # }}}
 
@@ -52,9 +51,8 @@ class OutputInterface
 
 class Html extends OutputInterface
 
-  constructor: (judge) ->
+  constructor: () ->
     @image_size = 50
-    @judge = judge
 
   show_cell: (piece, pos) =>
     [x, y] = @_calc_pos pos
@@ -90,7 +88,7 @@ class Console extends OutputInterface
     console.debug "[#{pos[0]}:#{pos[1]}]#{view}"
 # }}}
 
-# Player ボードにコマを置くクラス{{{
+# Player ボードにコマを置くクラス {{{
 class Player
   put_piece: ->
 
@@ -104,18 +102,14 @@ class User extends Player
     pieces = $('.piece')
     for piece in pieces
       piece.onclick = (e) =>
-        pos = [piece.id[0], piece.id[2]]
+        pos = [e.target.id[0], e.target.id[2]]
         @inputer.input pos, @piece
-        # TODO: posが[height-1, width-1]になる
-        #     : 例えば，idが1_3の要素をクリックしても
-        #     : posが[7, 7]になる
-        console.debug pos, @piece
 
-    #--- _thisへの退避がおかしくにアクセス出来ない例
+    #--- _thisへの退避がおかしく, アクセス出来ない例 {{{
     # $.each pieces, ->
     #   $(@).on 'click', =>
     #     pos = [@id[0], @id[2]]
-    #     @inputer.click pos, @piece
+    #     @inputer.click pos, @piece }}}
 
 class Cpu extends Player
   constructor: (piece_num, order) ->
@@ -168,6 +162,7 @@ class Judge
     @rule = rule
     @board = board
 
+  # 八方
   reverse: (pos, piece) ->
     for i in [-1..1]
       for j in [-1..1]
@@ -177,13 +172,13 @@ class Judge
   _reverse_piece: (pos, dir, cells, piece) ->
     [hx, hy] = [px, py] = pos
     [x, y] = dir
-    outputer = new Html this # TODO: 仮
+    outputer = new Html # TODO: 仮
 
     ## TODO: メソッドを分割する
     # 対岸のpieceの探索
     loop
       [px, py] = [px+x, py+y]
-      return null unless @rule.is_inboard [px, py]
+      return false unless @rule.is_inboard [px, py]
       target = cells[px][py].piece
       # 空白のマスもしくは自分自身のピースと衝突で探索打切
       break if target.color == piece.color
@@ -210,6 +205,7 @@ class Rule
   @b_height
   @player_num
   @piece_num
+  @user_piece_num
 
   is_puttable: (pos)->
   is_putted: (pos, board) ->
@@ -219,16 +215,17 @@ class Rule
   is_reverseble: (pos, board) ->
 
 class NormalRule extends Rule
-  constructor: ->
+  constructor: (board)->
     @b_width = @b_height = 8
     @player_num = 2
     @piece_num = @b_width * @b_height
     @user_piece_num = @piece_num / @player_num
+    @board = board
 
   is_puttable: (pos)->
     [x, y] = pos
-    return false unless @rule.is_inboard(pos)
-    return false if @rule.is_putted(pos, @board.cells[x][y])
+    return false unless @is_inboard(pos)
+    return false if @is_putted(pos, @board.cells[x][y])
     true
 
   is_putted: (pos, cell) ->
