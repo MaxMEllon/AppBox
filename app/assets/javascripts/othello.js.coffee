@@ -178,9 +178,11 @@ class Judge
     # 対岸のpieceの探索
     loop
       [px, py] = [px+x, py+y]
+      # 空白または範囲外で中止
       return false unless @rule.is_inboard [px, py]
+      return false if cells[px][py].piece.color == 'void'
       target = cells[px][py].piece
-      # 空白のマスもしくは自分自身のピースと衝突で探索打切
+      # 自分自身のピースと衝突で探索打切
       break if target.color == piece.color
 
     ## TODO: メソッドを分割する
@@ -190,7 +192,7 @@ class Judge
       loop
         console.debug [hx, hy], cells[hx][hy].piece, piece
         cells[hx][hy].piece = piece
-        # TODO: ここで描画処理をできれば呼びたくない(関連を減らすために)
+        # TODO: ここで描画処理を呼びたくない(関連を減らすために)
         id = '#' + hx + '_' + hy
         console.debug id
         outputer.change_color $(id), piece.color
