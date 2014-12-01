@@ -1,4 +1,4 @@
-# Othello {{{
+# Othello 各インスタンスを生成, オセロの実行を行う{{{
 class Othello
   constructor: ->
     # TODO:htmlの要素からルールを選択できるように
@@ -15,7 +15,7 @@ class Othello
 
 # }}}
 
-# Input {{{
+# InputInterface ユーザはこのクラスを用いて座標の入力をする{{{
 class InputInterface
 
 class Ai extends InputInterface
@@ -33,7 +33,7 @@ class Mouse extends InputInterface
 
 # }}}
 
-# Output {{{
+# Output オセロはこのクラスを用いて出力をする{{{
 class OutputInterface
   show_cell: (piece, pos) ->
 
@@ -90,7 +90,7 @@ class Console extends OutputInterface
     console.debug "[#{pos[0]}:#{pos[1]}]#{view}"
 # }}}
 
-# Player {{{
+# Player ボードにコマを置くクラス{{{
 class Player
   put_piece: ->
 
@@ -123,7 +123,7 @@ class Cpu extends Player
 
 # }}}
 
-# Board {{{
+# Board オセロの各マス目を生成するクラス {{{
 class Board
   constructor: (height, width) ->
     _height = height
@@ -144,31 +144,29 @@ class Board
        [cell, cell, cell, cell,  cell,  cell, cell, cell]
        [cell, cell, cell, cell,  cell,  cell, cell, cell]
        [cell, cell, cell, cell,  cell,  cell, cell, cell]]
-
+# Cell: オセロのマスを生成するクラス,置かれているピースの情報を知っている {{{
 class Cell
   constructor: (order = -1)->
     @piece = new Piece(order)
-
+#   }}}
+# Piece: ピースを生成するクラス, 自分のピースの種類を知っている {{{
 class Piece
   constructor: (order) ->
     return @color = 'void' if order == -1
     @color = Color.colors[order]
-
+#   }}}
+# Color オセロに登場する色の全種類の名前を知っている{{{
 class Color
+  # 青や赤は色物ルール用
   @colors = ['white', 'black', 'blue', 'red']
+#   }}}
 # }}}
 
-# Judge {{{
+# Judge: 正確にゲームを運べるようにボードへの操作をする {{{
 class Judge
   constructor: (rule, board)->
     @rule = rule
     @board = board
-
-  is_puttable: (pos)->
-    [x, y] = pos
-    return false unless @rule.is_inboard(pos)
-    return false if @rule.is_putted(pos, @board.cells[x][y])
-    true
 
   reverse: (pos, piece) ->
     for i in [-1..1]
@@ -181,6 +179,7 @@ class Judge
     [x, y] = dir
     outputer = new Html this # TODO: 仮
 
+    ## TODO: メソッドを分割する
     # 対岸のpieceの探索
     loop
       [px, py] = [px+x, py+y]
@@ -189,25 +188,35 @@ class Judge
       # 空白のマスもしくは自分自身のピースと衝突で探索打切
       break if target.color == piece.color
 
+    ## TODO: メソッドを分割する
     # 打切ったときのマスが自分自身なら裏返し処理実行
     goal = cells[px][py].piece.color
     if goal == piece.color
       loop
         console.debug [hx, hy], cells[hx][hy].piece, piece
         cells[hx][hy].piece = piece
+        # TODO: ここで描画処理をできれば呼びたくない(関連を減らすために)
         id = '#' + hx + '_' + hy
         console.debug id
         outputer.change_color $(id), piece.color
         [hx, hy] = [hx+x, hy+y]
         break if hx == px and hy == py
 
+# }}}
+
+# Rule: ボードを操作する際に必要な条件を持つクラス {{{
 class Rule
   @b_width
   @b_height
   @player_num
   @piece_num
 
+  is_puttable: (pos)->
   is_putted: (pos, board) ->
+  is_inboard: (pos) ->
+    [x, y] = pos
+    return x >= 0 && x < @b_height && y >= 0 && y < @b_width
+  is_reverseble: (pos, board) ->
 
 class NormalRule extends Rule
   constructor: ->
@@ -216,18 +225,22 @@ class NormalRule extends Rule
     @piece_num = @b_width * @b_height
     @user_piece_num = @piece_num / @player_num
 
+  is_puttable: (pos)->
+    [x, y] = pos
+    return false unless @rule.is_inboard(pos)
+    return false if @rule.is_putted(pos, @board.cells[x][y])
+    true
+
   is_putted: (pos, cell) ->
     [x, y] = pos
     cell.piece.color != 'void'
 
-  is_inboard: (pos) ->
-    [x, y] = pos
-    return x >= 0 && x < @b_height && y >= 0 && y < @b_width
-
   is_reverseble: (pos, board) ->
 # }}}
 
+# Debug: pending {{{
 class Debug
-  constructor: () ->
+  # TODO: デバッグの操作を記述
+# }}}
 
 @othello = new Othello
