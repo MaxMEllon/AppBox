@@ -1,4 +1,4 @@
-# Othello {{{
+#t Othello {{{
 class Othello
   constructor: ->
     # TODO:htmlの要素からルールを選択できるように
@@ -7,10 +7,11 @@ class Othello
     @judge     = new Judge @rule, @board
     @outputer  = new Html @judge
     # TODO:htmlの要素からプレイヤーを選択できるように
-    @player = [new User(@judge, 0), new User(@judge, 1)]
+    @players = [new User(@judge, 0), new User(@judge, 1)]
 
   run: ->
     @outputer.show_board @board
+    @players[0].decide_hand()
 
 # }}}
 
@@ -56,7 +57,6 @@ class Html extends OutputInterface
     @judge = judge
 
   show_piece: (piece, pos) =>
-    inputer = new Mouse @judge # TODO: 仮
     [x, y] = this._calc_pos pos
     color = this._get_piece_type piece
     $("<div class=\"piece #{color}\" id=#{pos[0]}_#{pos[1]}>")
@@ -65,8 +65,6 @@ class Html extends OutputInterface
         top : x + 'px',
         left: y + 'px'
       })
-      .on 'click', ->
-        inputer.input pos
       .appendTo $('div#othello')
 
   animation: (pos) ->
@@ -101,7 +99,13 @@ class User extends Player
     @inputer   = new Mouse judge
     @piece     = new Piece order
     @order     = order
+
   decide_hand: ()->
+    pieces = $('.piece')
+    $.each pieces, ->
+      $(this).on 'click', =>
+        pos = [this.id[0], this.id[2]]
+        @inputer.click pos
 
 class Cpu extends Player
   constructor: (piece_num, order) ->
