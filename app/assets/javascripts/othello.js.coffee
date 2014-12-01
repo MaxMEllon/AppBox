@@ -24,15 +24,12 @@ class Ai extends InputInterface
 class Mouse extends InputInterface
   constructor: (judge)->
     @judge = judge
-    # pieces = $(".piece")
-    # $.each pieces, =>
-    #   $(this).on 'click', =>
-    #     # HELP:ここでイベントハンドラ登録がうまくいかない
-    #     @input [this.id[0], this.id[2]]
+    @outputer  = new Html judge
 
   input: (pos)->
     console.debug pos
     @judge.reverse pos, new Piece(0)
+
 # }}}
 
 # Output {{{
@@ -59,7 +56,7 @@ class Html extends OutputInterface
     @judge = judge
 
   show_piece: (piece, pos) =>
-    inputer = new Mouse @judge # 仮
+    inputer = new Mouse @judge # TODO: 仮
     [x, y] = this._calc_pos pos
     color = this._get_piece_type piece
     $("<div class=\"piece #{color}\" id=#{pos[0]}_#{pos[1]}>")
@@ -68,7 +65,6 @@ class Html extends OutputInterface
         top : x + 'px',
         left: y + 'px'
       })
-      # 仮でここでイベントハンドラ登録
       .on 'click', ->
         inputer.input pos
       .appendTo $('div#othello')
@@ -121,7 +117,10 @@ class Board
     cell = new Cell
     black = new Cell(0)
     white = new Cell(1)
+
     # TODO: 頭のいい初期化の方法に変えたい
+    #     : 本来ならボードの初期形状はルールに依存するべきでは?
+    @onboard_piece_num
     @cells =
       [[cell, cell, cell, cell,  cell,  cell, cell, cell]
        [cell, cell, cell, cell,  cell,  cell, cell, cell]
@@ -152,42 +151,47 @@ class Judge
     @board = board
 
   is_puttable: (pos)->
+    [x, y] = pos
     return false unless @rule.is_inboard(pos)
-    false if @rule.is_putted(pos, @board)
+    return false if @rule.is_putted(pos, @board.cells[x][y])
+    true
 
   reverse: (pos, piece) ->
     for i in [-1..1]
       for j in [-1..1]
-        continue if i == j
+        continue if i == 0 and j == 0
         this._reverse_piece(pos, [i, j], @board.cells, piece)
 
   _reverse_piece: (pos, dir, cells, piece) ->
-    [px, py] = pos
+    [hx, hy] = [px, py] = pos
     [x, y] = dir
+    outputer = new Html this # TODO: 仮
+
+    # 対岸のpieceの探索
     loop
       [px, py] = [px+x, py+y]
-      return false unless @rule.is_inboard(pos)
+      return null unless @rule.is_inboard [px, py]
       target = cells[px][py].piece
-      # 対象セルが空でなくて自分自身じゃないとき繰り返す
-      break if target != new Piece(-1) and target != piece
-    cells[pos[0]][pos[1]].piece = piece
-    target = cells[px][py].piece
-    if target == piece
-      loop
-        cells[pos[0]][pos[1]].piece = piece
-        pos = [pos[0]+x, pos[1]+y]
-        break if pos[0] == px and pos[1] == py
+      # 空白のマスもしくは自分自身のピースと衝突で探索打切
+      break if target.color == piece.color
 
+    # 打切ったときのマスが自分自身なら裏返し処理実行
+    goal = cells[px][py].piece.color
+    if goal == piece.color
+      loop
+        console.debug [hx, hy], cells[hx][hy].piece, piece
+        cells[hx][hy].piece = piece
+        id = '#' + hx + '_' + hy
+        console.debug id
+        outputer.change_color $(id), piece.color
+        [hx, hy] = [hx+x, hy+y]
+        break if hx == px and hy == py
 
 class Rule
   @b_width
   @b_height
   @player_num
   @piece_num
-
-  is_inboard: (pos) ->
-    [x, y] = pos
-    return x >= 0 && x < @b_height && y >= 0 && y < @b_width
 
   is_putted: (pos, board) ->
 
@@ -198,10 +202,19 @@ class NormalRule extends Rule
     @piece_num = @b_width * @b_height
     @user_piece_num = @piece_num / @player_num
 
-  is_putted: (pos, board) ->
+  is_putted: (pos, cell) ->
     [x, y] = pos
-    return true if board.cells[x][y] != new Cell
+    cell.piece.color != 'void'
+
+  is_inboard: (pos) ->
+    [x, y] = pos
+    return x >= 0 && x < @b_height && y >= 0 && y < @b_width
+
+  is_reverseble: (pos, board) ->
 
 # }}}
+
+class Debug
+  constructor: () ->
 
 @othello = new Othello
