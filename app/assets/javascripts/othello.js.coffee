@@ -193,7 +193,7 @@ class Judge
     ##--------------------------------
     # 打切したときのマスが自分自身なら裏返し処理実行
     goal = cells[px][py].piece.color
-    if flag and goal == piece.color
+    if reverseble_flag and goal == piece.color
       loop
         console.debug [hx, hy], cells[hx][hy].piece, piece
         cells[hx][hy].piece = piece
