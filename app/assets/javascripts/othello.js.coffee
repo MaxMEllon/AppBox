@@ -1,12 +1,12 @@
 # Othello 各インスタンスを生成, オセロの実行を行う{{{
 class Othello
   constructor: ->
-    # TODO:htmlの要素からルールを選択できるように
+    # TODO: htmlの要素からルールを選択できるように
     @board     = new Board 8, 8   # TODO: マジックナンバーの削除
     @rule      = new NormalRule @board
     @judge     = new Judge @rule, @board
     @outputer  = new Html
-    # TODO:htmlの要素からプレイヤーを選択できるように
+    # TODO: htmlの要素からプレイヤーを選択できるように
     @players = [new User(@judge, 0), new User(@judge, 1)]
 
   run: ->
@@ -57,6 +57,7 @@ class Html extends OutputInterface
   show_cell: (piece, pos) =>
     [x, y] = @_calc_pos pos
     color = @_get_piece_type piece
+    # TODO: スッキリ書く方法があればそれに変更
     $("<div class=\"piece #{color}\" id=#{pos[0]}_#{pos[1]}>")
       .css({
         backgroundPosition: '-' + x + 'px -' + y + 'px',
@@ -91,6 +92,9 @@ class Console extends OutputInterface
 # Player ボードにコマを置くクラス {{{
 class Player
   put_piece: ->
+  _pos2int: (str_pos) ->
+    [x, y] = str_pos
+    pos = [parseInt(x), parseInt(y)]
 
 class User extends Player
   constructor: (judge, order) ->
@@ -102,10 +106,10 @@ class User extends Player
     pieces = $('.piece')
     for piece in pieces
       piece.onclick = (e) =>
-        pos = [e.target.id[0], e.target.id[2]]
+        pos = @_pos2int [e.target.id[0], e.target.id[2]]
         @inputer.input pos, @piece
 
-    #--- _thisへの退避がおかしく, アクセス出来ない例 {{{
+    #--- _thisへの退避がおかしく, アクセス出来ない {{{
     # $.each pieces, ->
     #   $(@).on 'click', =>
     #     pos = [@id[0], @id[2]]
@@ -128,6 +132,7 @@ class Board
 
     # TODO: 頭のいい初期化の方法に変えたい
     #     : 本来ならボードの初期形状はルールに依存するべきでは?
+    #     : でもルールを作るのにボードが必要
     @onboard_piece_num
     @cells =
       [[cell, cell, cell, cell,  cell,  cell, cell, cell]
@@ -175,6 +180,7 @@ class Judge
     outputer = new Html # TODO: 仮
 
     ## TODO: メソッドを分割する
+    ##--------------------------------
     # 対岸のpieceの探索
     loop
       [px, py] = [px+x, py+y]
@@ -184,20 +190,20 @@ class Judge
       target = cells[px][py].piece
       # 自分自身のピースと衝突で探索打切
       break if target.color == piece.color
-
-    ## TODO: メソッドを分割する
-    # 打切ったときのマスが自分自身なら裏返し処理実行
+    ##--------------------------------
+    # 打切したときのマスが自分自身なら裏返し処理実行
     goal = cells[px][py].piece.color
     if goal == piece.color
       loop
         console.debug [hx, hy], cells[hx][hy].piece, piece
         cells[hx][hy].piece = piece
-        # TODO: ここで描画処理を呼びたくない(関連を減らすために)
+        # TODO: ここで描画処理を呼びたくない(関連を減らすために?)
         id = '#' + hx + '_' + hy
         console.debug id
         outputer.change_color $(id), piece.color
         [hx, hy] = [hx+x, hy+y]
         break if hx == px and hy == py
+    ##--------------------------------
 
 # }}}
 
