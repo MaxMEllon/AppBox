@@ -27,7 +27,7 @@ class Mouse extends InputInterface
     @judge = judge
 
   input: (pos, piece)->
-    console.debug pos, piece
+    console.debug "clicked : ", pos
     if @judge.rule.is_puttable pos
       @judge.reverse pos, piece
 
@@ -174,13 +174,14 @@ class Judge
     for i in [-1..1]
       for j in [-1..1]
         continue if i == 0 and j == 0
-        this._reverse_piece(pos, [i, j], @board.cells, piece)
+        console.debug this._reverse_piece(pos, [i, j], @board.cells, piece)
 
   _reverse_piece: (pos, dir, cells, piece) ->
     [hx, hy] = [px, py] = pos
     [x, y] = dir
     outputer = new Html # TODO: 仮
     debug = new Debug
+    reverseble_flag = false
     ## TODO: メソッドを分割する
     ## Rule.is_reverseble へ ----------
     # 対岸のpieceの探索
@@ -196,20 +197,22 @@ class Judge
     ##--------------------------------
     # 打切したときのマスが自分自身なら裏返し処理実行
     end = cells[px][py].piece.color
-    debug.board cells
+    console.debug reverseble_flag, end == piece.color
     if reverseble_flag and end == piece.color
       loop
-        console.debug [hx, hy], cells[hx][hy].piece, piece
-        # TODO: ここで代入するとcell全体にピースが置かれてしまう
+        # TODO: ここで代入するとcell全体にpieceが置かれてしまう
         cells[hx][hy].piece = piece
+        console.debug cells[hx][hy].piece
         ## TODO: ここで描画処理を呼びたくない(関連を減らすために?) {{{
         id = '#' + hx + '_' + hy
-        console.debug id
         outputer.change_color $(id), piece.color
         ##-------------------------------------------------------- }}}
         [hx, hy] = [hx+x, hy+y]
+        console.debug "hx:hy", [hx, hy]
         break if hx == px and hy == py
     ##--------------------------------
+      return true
+    false
 # }}}
 
 # Rule: ボードを操作する際に必要な条件を持つクラス {{{
@@ -242,7 +245,7 @@ class NormalRule extends Rule
     @board = board
 # }}}
 
-# Debug: pending {{{
+# Debug: {{{
 class Debug
   constructor: () ->
   board: (cells) ->
