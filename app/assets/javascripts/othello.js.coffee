@@ -2,8 +2,8 @@
 class Othello
   constructor: ->
     # TODO: htmlの要素からルールを選択できるように
-    @board     = new Board 8, 8   # TODO: マジックナンバーの削除
-    @rule      = new NormalRule @board
+    @rule      = new NormalRule
+    @board     = new Board @rule
     @judge     = new Judge @rule, @board
     @outputer  = new Html
     # TODO: htmlの要素からプレイヤーを選択できるように
@@ -28,9 +28,7 @@ class Mouse extends InputInterface
 
   input: (pos, piece)->
     console.debug "clicked : ", pos
-    if @judge.rule.is_puttable pos
-      @judge.reverse pos, piece
-
+    @judge.reverse pos, piece
 # }}}
 
 # Output オセロはこのクラスを用いて出力をする {{{
@@ -68,14 +66,19 @@ class Html extends OutputInterface
       .appendTo $('div#othello')
 
   animation: (pos) ->
-    id = '#' + pos[0] + '_' + pos[1]
+    id = @pos2id pos
     $(id).fadeTo(100, 0.5)
 
-  change_color: (content, color) ->
+  change_color: (id, color) ->
+    content = $(id)
     content.removeClass "void"
     for c in Color.colors
       content.removeClass c
     content.addClass color
+
+  pos2id: (pos) ->
+    [x, y] = pos
+    id = '#' + x + '_' + y
 
   _calc_pos: (pos) ->
     x = pos[0] * @image_size
@@ -111,22 +114,17 @@ class User extends Player
         pos = @_pos2int [e.target.id[0], e.target.id[2]]
         @inputer.input pos, @piece
 
-    #--- _thisへの退避がおかしく, アクセス出来ない {{{
-    # $.each pieces, ->
-    #   $(@).on 'click', =>
-    #     pos = [@id[0], @id[2]]
-    #     @inputer.click pos, @piece }}}
-
 class Cpu extends Player
   constructor: (piece_num, order) ->
     @inputer   = new Ai
 
 # }}}
+
 # Board オセロの各マス目を生成するクラス {{{
 class Board
-  constructor: (height, width) ->
-    _height = height
-    _width = width
+  constructor: (rule) ->
+    _height = rule.b_height
+    _width = rule.b_width
     cell = new Cell
     white = new Cell(0)
     black = new Cell(1)
@@ -168,49 +166,31 @@ class Judge
   constructor: (rule, board)->
     @rule = rule
     @board = board
+    @outputer = new Html
 
   # 八方
   reverse: (pos, piece) ->
+    return false unless @rule.is_puttable pos, @board
     for i in [-1..1]
       for j in [-1..1]
         continue if i == 0 and j == 0
-        console.debug this._reverse_piece(pos, [i, j], @board.cells, piece)
+        this._reverse_piece pos, [i, j], @board.cells, piece
 
   _reverse_piece: (pos, dir, cells, piece) ->
-    [hx, hy] = [px, py] = pos
+    [px, py] = @rule.is_reverseble(pos, dir, cells, piece)
+    return false unless px? or py?
+    [hx, hy] = pos
     [x, y] = dir
-    outputer = new Html # TODO: 仮
-    debug = new Debug
-    reverseble_flag = false
-    ## TODO: メソッドを分割する
-    ## Rule.is_reverseble へ ----------
-    # 対岸のpieceの探索
-    loop
-      [px, py] = [px+x, py+y]
-      # 空白または範囲外で中止
-      return false unless @rule.is_inboard [px, py]
-      return false if cells[px][py].piece.color == 'void'
-      reverseble_flag = true if cells[px][py].piece.color != piece.color
-      target = cells[px][py].piece
-      # 自分自身のピースと衝突で探索打切
-      break if target.color == piece.color
-    ##--------------------------------
-    # 打切したときのマスが自分自身なら裏返し処理実行
-    end = cells[px][py].piece.color
-    console.debug reverseble_flag, end == piece.color
-    if reverseble_flag and end == piece.color
+    console.debug "p", [px, py], "h", [hx, hy], "dir", [x, y]
+    end = cells[px][py].piece
+    if @rule.is_same_piece end, piece
       loop
-        # TODO: ここで代入するとcell全体にpieceが置かれてしまう
+        console.debug "h", [hx, hy]
         cells[hx][hy].piece = piece
-        console.debug cells[hx][hy].piece
-        ## TODO: ここで描画処理を呼びたくない(関連を減らすために?) {{{
-        id = '#' + hx + '_' + hy
-        outputer.change_color $(id), piece.color
-        ##-------------------------------------------------------- }}}
+        id = @outputer.pos2id [hx, hy]
+        @outputer.change_color id, piece.color
         [hx, hy] = [hx+x, hy+y]
-        console.debug "hx:hy", [hx, hy]
         break if hx == px and hy == py
-    ##--------------------------------
       return true
     false
 # }}}
@@ -223,26 +203,43 @@ class Rule
   @piece_num
   @user_piece_num
 
-  is_puttable: (pos)->
+  is_puttable: (pos, board)->
     [x, y] = pos
-    return false unless @is_inboard(pos)
-    return false if @is_putted(pos, @board.cells[x][y])
+    return false unless @_is_inboard(pos)
+    return false if @_is_putted(board.cells[x][y].piece)
     true
-  is_putted: (pos, cell) ->
-    [x, y] = pos
-    cell.piece.color != 'void'
-  is_inboard: (pos) ->
+
+  # 裏返すことができる時trueではなく，座標を返しているのに注意
+  is_reverseble: (pos, dir, cells, piece) ->
+    [hx, hy] = [px, py] = pos
+    [x, y] = dir
+    reverseble_flag = false
+    loop
+      [px, py] = [px+x, py+y]
+      return false unless @_is_inboard [px, py]
+      target = cells[px][py].piece
+      return false unless @_is_putted target
+      break if @is_same_piece target, piece
+    return [px, py]
+    false
+
+  is_same_piece: (piece, mypiece) ->
+    piece.color == mypiece.color
+
+  _is_putted: (piece) ->
+    piece.color != 'void'
+
+  _is_inboard: (pos) ->
     [x, y] = pos
     return x >= 0 && x < @b_height && y >= 0 && y < @b_width
-  is_reverseble: (pos, board) ->
+
 
 class NormalRule extends Rule
-  constructor: (board)->
+  constructor: ()->
     @b_width = @b_height = 8
     @player_num = 2
     @piece_num = @b_width * @b_height
     @user_piece_num = @piece_num / @player_num
-    @board = board
 # }}}
 
 # Debug: {{{
