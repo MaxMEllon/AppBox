@@ -29,7 +29,6 @@ class Mouse extends InputInterface
   input: (pos, piece)->
     console.debug "clicked : ", pos
     @judge.reverse pos, piece
-
 # }}}
 
 # Output オセロはこのクラスを用いて出力をする {{{
@@ -115,6 +114,7 @@ class Cpu extends Player
     @inputer   = new Ai
 
 # }}}
+
 # Board オセロの各マス目を生成するクラス {{{
 class Board
   constructor: (rule) ->
@@ -161,6 +161,7 @@ class Judge
   constructor: (rule, board)->
     @rule = rule
     @board = board
+    @outputer = new Html
 
   # 八方
   reverse: (pos, piece) ->
@@ -169,9 +170,9 @@ class Judge
       for j in [-1..1]
         continue if i == 0 and j == 0
         this._reverse_piece pos, [i, j], @board.cells, piece
+    @outputer.show_board @board
 
   _reverse_piece: (pos, dir, cells, piece) ->
-    outputer = new Html # TODO: 仮
     [px, py] = @rule.is_reverseble(pos, dir, cells, piece)
     return false unless px? or py?
     [hx, hy] = pos
@@ -179,17 +180,9 @@ class Judge
     end = cells[px][py].piece.color
     if end == piece.color
       loop
-        # TODO: ここで代入するとcell全体にpieceが置かれてしまう
         cells[hx][hy].piece = piece
-        console.debug cells[hx][hy].piece
-        ## TODO: ここで描画処理を呼びたくない(関連を減らすために?) {{{
-        id = '#' + hx + '_' + hy
-        outputer.change_color $(id), piece.color
-        ##-------------------------------------------------------- }}}
         [hx, hy] = [hx+x, hy+y]
-        console.debug "hx:hy", [hx, hy]
         break if hx == px and hy == py
-    ##--------------------------------
       return true
     false
 # }}}
@@ -204,8 +197,8 @@ class Rule
 
   is_puttable: (pos, board)->
     [x, y] = pos
-    return false unless @is_inboard(pos)
-    return false if @is_putted(pos, board.cells[x][y])
+    return false unless @_is_inboard(pos)
+    return false if @_is_putted(board.cells[x][y].piece)
     true
 
   # 裏返すことができる時trueではなく，座標を返しているのに注意
@@ -215,28 +208,23 @@ class Rule
     reverseble_flag = false
     loop
       [px, py] = [px+x, py+y]
-      return false unless @is_inboard [px, py]
+      return false unless @_is_inboard [px, py]
       target = cells[px][py].piece
-      return false if @is_void(target)
-      reverseble_flag = true unless @is_mypiece(target, piece)
-      break if target.color == piece.color
+      return false unless @_is_putted(target)
+      reverseble_flag = true unless @_is_same_piece(target, piece)
+      break if @_is_same_piece
     return [px, py] if reverseble_flag
     false
 
-  is_putted: (pos, cell) ->
-    [x, y] = pos
-    cell.piece.color != 'void'
+  _is_putted: (piece) ->
+    piece.color != 'void'
 
-  is_inboard: (pos) ->
+  _is_inboard: (pos) ->
     [x, y] = pos
     return x >= 0 && x < @b_height && y >= 0 && y < @b_width
 
-  is_void: (piece) ->
-    piece.color == 'void'
-
-  is_mypiece: (piece, mypiece) ->
+  _is_same_piece: (piece, mypiece) ->
     piece.color == mypiece.color
-
 
 class NormalRule extends Rule
   constructor: ()->
