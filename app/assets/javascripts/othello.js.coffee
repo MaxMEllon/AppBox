@@ -23,8 +23,7 @@ class Ai extends InputInterface
   select_piece_listener: ->
 
 class Mouse extends InputInterface
-  constructor: (judge)->
-    @judge = judge
+  constructor: (@judge)->
 
   input: (pos, piece)->
     console.debug "clicked : ", pos
@@ -37,7 +36,7 @@ class OutputInterface
 
   show_board: (board) ->
     height = board.cells.length
-    width =  board.cells[0].length
+    width  = board.cells[0].length
     for x in [0...height]
       for y in [0...width]
         @show_cell board.cells[x][y].piece, [x, y]
@@ -101,10 +100,9 @@ class Player
     pos = [parseInt(x), parseInt(y)]
 
 class User extends Player
-  constructor: (judge, order) ->
+  constructor: (judge, @order) ->
     @inputer   = new Mouse judge
     @piece     = new Piece order
-    @order     = order
 
   put_piece: ()->
     pieces = $('.piece')
@@ -122,10 +120,10 @@ class Cpu extends Player
 
 # Board オセロの各マス目を生成するクラス {{{
 class Board
-  constructor: (rule) ->
-    _height = rule.b_height
-    _width = rule.b_width
-    cell = new Cell
+  constructor: (@rule) ->
+    _height = @rule.b_height
+    _width  = @rule.b_width
+    cell  = new Cell
     white = new Cell(0)
     black = new Cell(1)
 
@@ -163,9 +161,7 @@ class Color
 
 # Judge: 正確にゲームを運べるようにボードへの操作をする {{{
 class Judge
-  constructor: (rule, board)->
-    @rule = rule
-    @board = board
+  constructor: (@rule, @board)->
     @outputer = new Html
 
   # 八方
@@ -186,7 +182,8 @@ class Judge
     if @rule.is_same_piece end, piece
       loop
         console.debug "h", [hx, hy]
-        cells[hx][hy].piece = piece
+        # cells[hx][hy].piece = piece
+        console.debug [hx, hy], cells[hx][hy].piece, piece
         id = @outputer.pos2id [hx, hy]
         @outputer.change_color id, piece.color
         [hx, hy] = [hx+x, hy+y]
@@ -197,11 +194,6 @@ class Judge
 
 # Rule: ボードを操作する際に必要な条件を持つクラス {{{
 class Rule
-  @b_width
-  @b_height
-  @player_num
-  @piece_num
-  @user_piece_num
 
   is_puttable: (pos, board)->
     [x, y] = pos
@@ -235,9 +227,10 @@ class Rule
 
 
 class NormalRule extends Rule
+  b_width  : 8
+  b_height : 8
+  player_num : 2
   constructor: ()->
-    @b_width = @b_height = 8
-    @player_num = 2
     @piece_num = @b_width * @b_height
     @user_piece_num = @piece_num / @player_num
 # }}}
