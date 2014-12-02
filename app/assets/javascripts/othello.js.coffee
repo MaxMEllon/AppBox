@@ -2,8 +2,8 @@
 class Othello
   constructor: ->
     # TODO: htmlの要素からルールを選択できるように
-    @board     = new Board 8, 8   # TODO: マジックナンバーの削除
-    @rule      = new NormalRule @board
+    @rule      = new NormalRule
+    @board     = new Board @rule
     @judge     = new Judge @rule, @board
     @outputer  = new Html
     # TODO: htmlの要素からプレイヤーを選択できるように
@@ -28,8 +28,7 @@ class Mouse extends InputInterface
 
   input: (pos, piece)->
     console.debug "clicked : ", pos
-    if @judge.rule.is_puttable pos
-      @judge.reverse pos, piece
+    @judge.reverse pos, piece
 
 # }}}
 
@@ -124,9 +123,9 @@ class Cpu extends Player
 # }}}
 # Board オセロの各マス目を生成するクラス {{{
 class Board
-  constructor: (height, width) ->
-    _height = height
-    _width = width
+  constructor: (rule) ->
+    _height = rule.b_height
+    _width = rule.b_width
     cell = new Cell
     white = new Cell(0)
     black = new Cell(1)
@@ -171,10 +170,11 @@ class Judge
 
   # 八方
   reverse: (pos, piece) ->
+    return false unless @rule.is_puttable pos, @board
     for i in [-1..1]
       for j in [-1..1]
         continue if i == 0 and j == 0
-        console.debug this._reverse_piece(pos, [i, j], @board.cells, piece)
+        this._reverse_piece pos, [i, j], @board.cells, piece
 
   _reverse_piece: (pos, dir, cells, piece) ->
     [hx, hy] = [px, py] = pos
@@ -223,26 +223,28 @@ class Rule
   @piece_num
   @user_piece_num
 
-  is_puttable: (pos)->
+  is_puttable: (pos, board)->
     [x, y] = pos
     return false unless @is_inboard(pos)
-    return false if @is_putted(pos, @board.cells[x][y])
+    return false if @is_putted(pos, board.cells[x][y])
     true
+
   is_putted: (pos, cell) ->
     [x, y] = pos
     cell.piece.color != 'void'
+
   is_inboard: (pos) ->
     [x, y] = pos
     return x >= 0 && x < @b_height && y >= 0 && y < @b_width
-  is_reverseble: (pos, board) ->
+
+  is_reverseble: (pos, dir, board) ->
 
 class NormalRule extends Rule
-  constructor: (board)->
+  constructor: ()->
     @b_width = @b_height = 8
     @player_num = 2
     @piece_num = @b_width * @b_height
     @user_piece_num = @piece_num / @player_num
-    @board = board
 # }}}
 
 # Debug: {{{
