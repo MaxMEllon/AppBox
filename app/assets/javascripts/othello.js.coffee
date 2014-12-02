@@ -110,12 +110,6 @@ class User extends Player
         pos = @_pos2int [e.target.id[0], e.target.id[2]]
         @inputer.input pos, @piece
 
-    #--- _thisへの退避がおかしく, アクセス出来ない {{{
-    # $.each pieces, ->
-    #   $(@).on 'click', =>
-    #     pos = [@id[0], @id[2]]
-    #     @inputer.click pos, @piece }}}
-
 class Cpu extends Player
   constructor: (piece_num, order) ->
     @inputer   = new Ai
@@ -177,28 +171,13 @@ class Judge
         this._reverse_piece pos, [i, j], @board.cells, piece
 
   _reverse_piece: (pos, dir, cells, piece) ->
-    [hx, hy] = [px, py] = pos
-    [x, y] = dir
     outputer = new Html # TODO: 仮
-    debug = new Debug
-    reverseble_flag = false
-    ## TODO: メソッドを分割する
-    ## Rule.is_reverseble へ ----------
-    # 対岸のpieceの探索
-    loop
-      [px, py] = [px+x, py+y]
-      # 空白または範囲外で中止
-      return false unless @rule.is_inboard [px, py]
-      return false if cells[px][py].piece.color == 'void'
-      reverseble_flag = true if cells[px][py].piece.color != piece.color
-      target = cells[px][py].piece
-      # 自分自身のピースと衝突で探索打切
-      break if target.color == piece.color
-    ##--------------------------------
-    # 打切したときのマスが自分自身なら裏返し処理実行
+    [px, py] = @rule.is_reverseble(pos, dir, cells, piece)
+    return false unless px? or py?
+    [hx, hy] = pos
+    [x, y] = dir
     end = cells[px][py].piece.color
-    console.debug reverseble_flag, end == piece.color
-    if reverseble_flag and end == piece.color
+    if end == piece.color
       loop
         # TODO: ここで代入するとcell全体にpieceが置かれてしまう
         cells[hx][hy].piece = piece
@@ -229,6 +208,21 @@ class Rule
     return false if @is_putted(pos, board.cells[x][y])
     true
 
+  # 裏返すことができる時trueではなく，座標を返しているのに注意
+  is_reverseble: (pos, dir, cells, piece) ->
+    [hx, hy] = [px, py] = pos
+    [x, y] = dir
+    reverseble_flag = false
+    loop
+      [px, py] = [px+x, py+y]
+      return false unless @is_inboard [px, py]
+      target = cells[px][py].piece
+      return false if @is_void(target)
+      reverseble_flag = true unless @is_mypiece(target, piece)
+      break if target.color == piece.color
+    return [px, py] if reverseble_flag
+    false
+
   is_putted: (pos, cell) ->
     [x, y] = pos
     cell.piece.color != 'void'
@@ -237,7 +231,12 @@ class Rule
     [x, y] = pos
     return x >= 0 && x < @b_height && y >= 0 && y < @b_width
 
-  is_reverseble: (pos, dir, board) ->
+  is_void: (piece) ->
+    piece.color == 'void'
+
+  is_mypiece: (piece, mypiece) ->
+    piece.color == mypiece.color
+
 
 class NormalRule extends Rule
   constructor: ()->
