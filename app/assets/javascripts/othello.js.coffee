@@ -66,14 +66,19 @@ class Html extends OutputInterface
       .appendTo $('div#othello')
 
   animation: (pos) ->
-    id = '#' + pos[0] + '_' + pos[1]
+    id = @pos2id pos
     $(id).fadeTo(100, 0.5)
 
-  change_color: (content, color) ->
+  change_color: (id, color) ->
+    content = $(id)
     content.removeClass "void"
     for c in Color.colors
       content.removeClass c
     content.addClass color
+
+  pos2id: (pos) ->
+    [x, y] = pos
+    id = '#' + x + '_' + y
 
   _calc_pos: (pos) ->
     x = pos[0] * @image_size
@@ -170,17 +175,20 @@ class Judge
       for j in [-1..1]
         continue if i == 0 and j == 0
         this._reverse_piece pos, [i, j], @board.cells, piece
-    @outputer.show_board @board
 
   _reverse_piece: (pos, dir, cells, piece) ->
     [px, py] = @rule.is_reverseble(pos, dir, cells, piece)
     return false unless px? or py?
     [hx, hy] = pos
     [x, y] = dir
-    end = cells[px][py].piece.color
-    if end == piece.color
+    console.debug "p", [px, py], "h", [hx, hy], "dir", [x, y]
+    end = cells[px][py].piece
+    if @rule.is_same_piece end, piece
       loop
+        console.debug "h", [hx, hy]
         cells[hx][hy].piece = piece
+        id = @outputer.pos2id [hx, hy]
+        @outputer.change_color id, piece.color
         [hx, hy] = [hx+x, hy+y]
         break if hx == px and hy == py
       return true
@@ -210,11 +218,13 @@ class Rule
       [px, py] = [px+x, py+y]
       return false unless @_is_inboard [px, py]
       target = cells[px][py].piece
-      return false unless @_is_putted(target)
-      reverseble_flag = true unless @_is_same_piece(target, piece)
-      break if @_is_same_piece
-    return [px, py] if reverseble_flag
+      return false unless @_is_putted target
+      break if @is_same_piece target, piece
+    return [px, py]
     false
+
+  is_same_piece: (piece, mypiece) ->
+    piece.color == mypiece.color
 
   _is_putted: (piece) ->
     piece.color != 'void'
@@ -223,8 +233,6 @@ class Rule
     [x, y] = pos
     return x >= 0 && x < @b_height && y >= 0 && y < @b_width
 
-  _is_same_piece: (piece, mypiece) ->
-    piece.color == mypiece.color
 
 class NormalRule extends Rule
   constructor: ()->
