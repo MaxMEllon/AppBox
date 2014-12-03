@@ -11,7 +11,6 @@ class Othello
 
   run: ->
     @outputer.show_board @board
-    # TODO: 交互に呼びたい(0番プレーヤが終わったら1番プレーヤへ)
     @players[0].put_piece()
 # }}}
 
@@ -23,11 +22,13 @@ class Ai extends InputInterface
   select_piece_listener: ->
 
 class Mouse extends InputInterface
+  cnt : 0
   constructor: (@judge)->
 
   input: (pos, piece)->
-    console.debug "clicked : ", pos
-    @judge.reverse pos, piece
+    console.debug "clicked : ", pos, @cnt
+    order = @cnt % 2
+    @cnt++ if @judge.reverse pos, new Piece(order)
 # }}}
 
 # Output オセロはこのクラスを用いて出力をする {{{
@@ -126,7 +127,6 @@ class User extends Player
 class Cpu extends Player
   constructor: (piece_num, order) ->
     @inputer   = new Ai
-
 # }}}
 
 # Board オセロの各マス目を生成するクラス {{{
@@ -170,12 +170,14 @@ class Judge
 
   # 8方向捜索
   reverse: (pos, piece) ->
-    return false unless @rule.is_puttable pos, @board
+    result = false
+    return result unless @rule.is_puttable pos, @board
     for i in [-1..1]
       for j in [-1..1]
         continue if i is 0 and j is 0
-        this._reverse_piece pos, [i, j], @board.cells, piece
+        result = true if this._reverse_piece pos, [i, j], @board.cells, piece
     @outputer.update_board @board
+    result
 
   _reverse_piece: (pos, dir, cells, piece) ->
     data = @rule.is_reverseble pos, dir, cells, piece
@@ -186,6 +188,7 @@ class Judge
       cells[hx][hy].piece = piece
       [hx, hy] = [hx+x, hy+y]
       break if cnt-- <= 0
+    return true
 # }}}
 
 # Rule: ボードを操作する際に必要な条件を持つクラス {{{
