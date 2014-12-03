@@ -143,9 +143,10 @@ class Board
       for j in [0...@width]
         @cells[i][j] = new Cell
     [x, y] = [@height/2, @width/2-1]
-    @cells[x][x] = @cells[y][y] = new Cell(0)
-    @cells[x][y] = @cells[y][x] = new Cell(1)
-
+    @cells[x][x] = new Cell(0)
+    @cells[y][y] = new Cell(0)
+    @cells[x][y] = new Cell(1)
+    @cells[y][x] = new Cell(1)
 
 # Cell: オセロのマスを生成するクラス,置かれているピースの情報を知っている {{{
 class Cell
@@ -170,7 +171,7 @@ class Judge
   constructor: (@rule, @board)->
     @outputer = new Html
 
-  # 八方
+  # 8方向捜索
   reverse: (pos, piece) ->
     return false unless @rule.is_puttable pos, @board
     for i in [-1..1]
@@ -181,20 +182,14 @@ class Judge
     @outputer.update_board @board
 
   _reverse_piece: (pos, dir, cells, piece) ->
-    [px, py] = @rule.is_reverseble(pos, dir, cells, piece)
-    return false unless px? and  py?
-    [hx, hy] = pos
-    [x, y] = dir
-    end = cells[px][py].piece
-    console.debug end, piece
-    if @rule.is_same_piece end, piece
-      loop
-        console.debug [px, py], cells[px][py].piece
-        cells[hx][hy].piece = piece
-        [hx, hy] = [hx+x, hy+y]
-        break if hx == px and hy == py
-      return true
-    false
+    data = @rule.is_reverseble pos, dir, cells, piece
+    return false if ! data['flag'] or data['cnt'] == 0
+    console.debug cnt = data['cnt']
+    [[hx, hy], [x, y]] = [pos, dir]
+    loop
+      cells[hx][hy].piece = piece
+      [hx, hy] = [hx+x, hy+y]
+      break if cnt-- <= 0
 # }}}
 
 # Rule: ボードを操作する際に必要な条件を持つクラス {{{
@@ -205,21 +200,21 @@ class Rule
     return false if @_is_putted(board.cells[x][y].piece)
     true
 
-  # 裏返すことができる時trueではなく，座標を返しているのに注意
   is_reverseble: (pos, dir, cells, piece) ->
     [px, py] = pos
     [x, y] = dir
+    cnt = 0
     loop
       [px, py] = [px+x, py+y]
-      return false unless @_is_inboard [px, py]
+      return { flag: false } unless @_is_inboard [px, py]
       target = cells[px][py].piece
-      return false unless @_is_putted target
+      return { flag: false } if target.color == 'void'
+      cnt++ unless @is_same_piece target, piece
       break if @is_same_piece target, piece
-    return [px, py]
-  false
+    return { flag: true, pos: [px, py], cnt: cnt }
 
   is_same_piece: (piece, mypiece) ->
-    piece.color == mypiece.color
+    piece.color == mypiece.color and piece.color != 'void'
 
   _is_putted: (piece) ->
     piece.color != 'void'
