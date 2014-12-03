@@ -53,7 +53,7 @@ class Html extends OutputInterface
     @image_size = 50
 
   show_cell: (piece, pos) =>
-    [x, y] = @_calc_pos pos
+    [x, y] = Pos.calc_pos pos, @image_size
     color = @_get_piece_type piece
     # TODO: スッキリ書く方法があればそれに変更
     $("<div class=\"piece #{color}\" id=#{pos[0]}_#{pos[1]}>")
@@ -61,31 +61,28 @@ class Html extends OutputInterface
         backgroundPosition: '-' + x + 'px -' + y + 'px',
         top : x + 'px',
         left: y + 'px'
-      })
-      .hover(
+      }).hover(
         ->$(this).fadeTo("fast", 0.5),
         ->$(this).fadeTo("fast", 1.0)
-      )
-      .text piece.color + pos
+      ).text piece.color + pos
       .appendTo $('div#othello')
 
   update_board: (board) ->
-    # height = board.cells.length
-    # width  = board.cells[0].length
     for x in [0...board.height]
       for y in [0...board.width]
-        id = Html.pos2id [x, y]
+        id = Pos.pos2id [x, y]
         @change_color id, board.cells[x][y].piece.color
 
   change_color: (id, color) ->
     content = $(id)
     content.removeClass "void"
-    pos = Html.id2pos id
+    pos = Pos.id2pos id
     content.text color + pos
     for c in Color.colors
       content.removeClass c
     content.addClass color
 
+class Pos
   @pos2id: (pos) ->
     [x, y] = pos
     id = '#' + x + '_' + y
@@ -97,9 +94,9 @@ class Html extends OutputInterface
     [x, y] = str_pos
     pos = [parseInt(x), parseInt(y)]
 
-  _calc_pos: (pos) ->
-    x = pos[0] * @image_size
-    y = pos[1] * @image_size
+  @calc_pos: (pos, size) ->
+    x = pos[0] * size
+    y = pos[1] * size
     [x, y]
 
 class Console extends OutputInterface
@@ -123,7 +120,7 @@ class User extends Player
     pieces = $('.piece')
     for piece in pieces
       piece.onclick = (e) =>
-        pos = Html.pos2int [e.target.id[0], e.target.id[2]]
+        pos = Pos.pos2int [e.target.id[0], e.target.id[2]]
         @inputer.input pos, @piece
 
 class Cpu extends Player
@@ -156,7 +153,7 @@ class Cell
 # Piece: ピースを生成するクラス, 自分のピースの種類を知っている {{{
 class Piece
   constructor: (order) ->
-    return @color = 'void' if order == -1
+    return @color = 'void' if order is -1
     @color = Color.colors[order]
 #   }}}
 # Color オセロに登場する色の全種類の名前を知っている{{{
@@ -176,15 +173,14 @@ class Judge
     return false unless @rule.is_puttable pos, @board
     for i in [-1..1]
       for j in [-1..1]
-        # Debug.cells(@board.cells) # 裏返した次のループからバグってる
-        continue if i == 0 and j == 0
+        continue if i is 0 and j is 0
         this._reverse_piece pos, [i, j], @board.cells, piece
     @outputer.update_board @board
 
   _reverse_piece: (pos, dir, cells, piece) ->
     data = @rule.is_reverseble pos, dir, cells, piece
-    return false if ! data['flag'] or data['cnt'] == 0
-    console.debug cnt = data['cnt']
+    return false if not data['flag'] or data['cnt'] is 0
+    cnt = data['cnt']
     [[hx, hy], [x, y]] = [pos, dir]
     loop
       cells[hx][hy].piece = piece
@@ -201,28 +197,31 @@ class Rule
     true
 
   is_reverseble: (pos, dir, cells, piece) ->
-    [px, py] = pos
-    [x, y] = dir
+    [[px, py], [x, y]] = [pos, dir]
     cnt = 0
     loop
       [px, py] = [px+x, py+y]
       return { flag: false } unless @_is_inboard [px, py]
       target = cells[px][py].piece
-      return { flag: false } if target.color == 'void'
-      cnt++ unless @is_same_piece target, piece
-      break if @is_same_piece target, piece
+      return { flag: false } if @_is_empty target
+      if @is_same_piece target, piece
+        break
+      else
+        cnt++
     return { flag: true, pos: [px, py], cnt: cnt }
 
   is_same_piece: (piece, mypiece) ->
-    piece.color == mypiece.color and piece.color != 'void'
+    piece.color is mypiece.color and piece.color isnt 'void'
 
   _is_putted: (piece) ->
-    piece.color != 'void'
+    piece.color isnt 'void'
+
+  _is_empty: (piece) ->
+    piece.color is 'void'
 
   _is_inboard: (pos) ->
     [x, y] = pos
-    return x >= 0 && x < @b_height && y >= 0 && y < @b_width
-
+    return x >= 0 and x < @b_height and y >= 0 and y < @b_width
 
 class NormalRule extends Rule
   b_width  : 8
@@ -237,7 +236,7 @@ class NormalRule extends Rule
 class Debug
   @cnt : 0
   @cells: (cells, message = 'debug')  ->
-    console.debug message + '(cnt)' + (++@cnt) + '-----------------------'
+    console.debug message + '(cnt)' + (++@cnt) + '--------'
     for line in cells
       for cell in line
         console.debug cell.piece.color
