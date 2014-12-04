@@ -2,7 +2,7 @@
 class Othello
   constructor: ->
     # TODO: htmlの要素からルールを選択できるように
-    @rule      = new NormalRule
+    @rule      = RuleCreater.make_rule "normal"
     @board     = new Board @rule
     @judge     = new Judge @rule, @board
     @outputer  = new Html
@@ -33,16 +33,16 @@ class Mouse extends InputInterface
 
 # Output オセロはこのクラスを用いて出力をする {{{
 class OutputInterface
-  show_cell: (piece, pos) ->
+  show_cell: (piece, pos)->
 
-  show_board: (board) ->
+  show_board: (board)->
     height = board.cells.length
     width  = board.cells[0].length
     for x in [0...height]
       for y in [0...width]
         @show_cell board.cells[x][y].piece, [x, y]
 
-  _get_piece_type: (piece) ->
+  _get_piece_type: (piece)->
     color = 'void'  if piece.color == new Piece(-1).color
     color = 'white' if piece.color == new Piece(0).color
     color = 'black' if piece.color == new Piece(1).color
@@ -50,10 +50,10 @@ class OutputInterface
 
 class Html extends OutputInterface
 
-  constructor: () ->
+  constructor: ()->
     @image_size = 50
 
-  show_cell: (piece, pos) =>
+  show_cell: (piece, pos)->
     [x, y] = Pos.calc_pos pos, @image_size
     color = @_get_piece_type piece
     # TODO: スッキリ書く方法があればそれに変更
@@ -63,18 +63,18 @@ class Html extends OutputInterface
         top : x + 'px',
         left: y + 'px'
       }).hover(
-        ->$(this).fadeTo("fast", 0.5),
-        ->$(this).fadeTo("fast", 1.0)
+        ->$(@).fadeTo("fast", 0.5),
+        ->$(@).fadeTo("fast", 1.0)
       ).text piece.color + pos
       .appendTo $('div#othello')
 
-  update_board: (board) ->
+  update_board: (board)->
     for x in [0...board.height]
       for y in [0...board.width]
         id = Pos.pos2id [x, y]
         @change_color id, board.cells[x][y].piece.color
 
-  change_color: (id, color) ->
+  change_color: (id, color)->
     content = $(id)
     content.removeClass "void"
     pos = Pos.id2pos id
@@ -84,18 +84,18 @@ class Html extends OutputInterface
     content.addClass color
 
 class Pos
-  @pos2id: (pos) ->
+  @pos2id: (pos)->
     [x, y] = pos
     id = '#' + x + '_' + y
 
-  @id2pos: (id) ->
+  @id2pos: (id)->
     [id[1], id[3]]
 
-  @pos2int: (str_pos) ->
+  @pos2int: (str_pos)->
     [x, y] = str_pos
     pos = [parseInt(x), parseInt(y)]
 
-  @calc_pos: (pos, size) ->
+  @calc_pos: (pos, size)->
     x = pos[0] * size
     y = pos[1] * size
     [x, y]
@@ -103,8 +103,8 @@ class Pos
 class Console extends OutputInterface
   constructor: ->
 
-  show_cell: (piece, pos) ->
-    view = this._get_piece_type piece
+  show_cell: (piece, pos)->
+    view = @_get_piece_type piece
     console.debug "[#{pos[0]}:#{pos[1]}]#{view}"
 # }}}
 
@@ -113,25 +113,25 @@ class Player
   put_piece: ->
 
 class User extends Player
-  constructor: (judge, @order) ->
+  constructor: (judge, @order)->
     @inputer   = new Mouse judge
     @piece     = new Piece order
 
   put_piece: ()->
     pieces = $('.piece')
     for piece in pieces
-      piece.onclick = (e) =>
+      piece.onclick = (e)=>
         pos = Pos.pos2int [e.target.id[0], e.target.id[2]]
         @inputer.input pos, @piece
 
 class Cpu extends Player
-  constructor: (piece_num, order) ->
+  constructor: (piece_num, order)->
     @inputer   = new Ai
 # }}}
 
 # Board オセロの各マス目を生成するクラス {{{
 class Board
-  constructor: (@rule) ->
+  constructor: (@rule)->
     @height = @rule.b_height
     @width  = @rule.b_width
     @cells = []
@@ -152,7 +152,7 @@ class Cell
 #   }}}
 # Piece: ピースを生成するクラス, 自分のピースの種類を知っている {{{
 class Piece
-  constructor: (order) ->
+  constructor: (order)->
     return @color = 'void' if order is -1
     @color = Color.colors[order]
 #   }}}
@@ -169,17 +169,17 @@ class Judge
     @outputer = new Html
 
   # 8方向捜索
-  reverse: (pos, piece) ->
+  reverse: (pos, piece)->
     result = false
     return result unless @rule.is_puttable pos, @board
     for i in [-1..1]
       for j in [-1..1]
         continue if i is 0 and j is 0
-        result = true if this._reverse_piece pos, [i, j], @board.cells, piece
+        result = true if @_reverse_piece pos, [i, j], @board.cells, piece
     @outputer.update_board @board
     result
 
-  _reverse_piece: (pos, dir, cells, piece) ->
+  _reverse_piece: (pos, dir, cells, piece)->
     data = @rule.is_reverseble pos, dir, cells, piece
     return false if not data['flag'] or data['cnt'] is 0
     cnt = data['cnt']
@@ -199,7 +199,7 @@ class Rule
     return false if @_is_putted(board.cells[x][y].piece)
     true
 
-  is_reverseble: (pos, dir, cells, piece) ->
+  is_reverseble: (pos, dir, cells, piece)->
     [[px, py], [x, y]] = [pos, dir]
     cnt = 0
     loop
@@ -213,16 +213,16 @@ class Rule
         cnt++
     return { flag: true, pos: [px, py], cnt: cnt }
 
-  is_same_piece: (piece, mypiece) ->
+  is_same_piece: (piece, mypiece)->
     piece.color is mypiece.color and piece.color isnt 'void'
 
-  _is_putted: (piece) ->
+  _is_putted: (piece)->
     piece.color isnt 'void'
 
-  _is_empty: (piece) ->
+  _is_empty: (piece)->
     piece.color is 'void'
 
-  _is_inboard: (pos) ->
+  _is_inboard: (pos)->
     [x, y] = pos
     return x >= 0 and x < @b_height and y >= 0 and y < @b_width
 
@@ -233,12 +233,18 @@ class NormalRule extends Rule
   constructor: ()->
     @piece_num = @b_width * @b_height
     @user_piece_num = @piece_num / @player_num
+
+class RuleCreater
+  @make_rule: (name)->
+    switch name
+      when "normal" then new NormalRule
+      # you should to add the original rule class
 # }}}
 
 # Debug: {{{
 class Debug
   @cnt : 0
-  @cells: (cells, message = 'debug')  ->
+  @cells: (cells, message = 'debug')->
     console.debug message + '(cnt)' + (++@cnt) + '--------'
     for line in cells
       for cell in line
