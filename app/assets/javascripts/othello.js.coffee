@@ -84,6 +84,9 @@ class Html extends OutputInterface
     content.addClass color
 
 class Pos
+  @margin_top  : 50
+  @margin_left : 0
+
   @pos2id: (pos)->
     [x, y] = pos
     id = '#' + x + '_' + y
@@ -96,8 +99,8 @@ class Pos
     pos = [parseInt(x), parseInt(y)]
 
   @calc_pos: (pos, size)->
-    x = pos[0] * size
-    y = pos[1] * size
+    x = pos[0] * size + @margin_top
+    y = pos[1] * size + @margin_left
     [x, y]
 
 class Console extends OutputInterface
