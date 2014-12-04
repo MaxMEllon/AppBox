@@ -1,17 +1,20 @@
+window.othello = {}
+
 # Othello 各インスタンスを生成, オセロの実行を行う{{{
 class Othello
-  constructor: ->
-    # TODO: htmlの要素からルールを選択できるように
-    @rule      = RuleCreater.make_rule "normal"
+  exec: ->
+    @reset()
+    rule_name  = $('#rule')[0].value
+    @rule      = RuleCreater.make_rule rule_name
     @board     = new Board @rule
     @judge     = new Judge @rule, @board
     @outputer  = new Html
     # TODO: htmlの要素からプレイヤーを選択できるように
     @players = [new User(@judge, 0), new User(@judge, 1)]
-
-  run: ->
     @outputer.show_board @board
     @players[0].put_piece()
+  reset: ->
+    $('.piece').remove()
 # }}}
 
 # InputInterface ユーザはこのクラスを用いて座標の入力をする{{{
@@ -22,13 +25,16 @@ class Ai extends InputInterface
   select_piece_listener: ->
 
 class Mouse extends InputInterface
-  cnt : 0
+  order : 0
   constructor: (@judge)->
 
   input: (pos, piece)->
-    console.debug "clicked : ", pos, @cnt
-    order = @cnt % 2
-    @cnt++ if @judge.reverse pos, new Piece(order)
+    console.debug "clicked : ", pos, @order
+    piece = new Piece(@order%2)
+    if @judge.reverse pos, piece
+      $('<p>').text('[' + @order + ']' + piece.color + pos)
+        .appendTo $('iframe:first').contents().find('body')
+      @order++
 # }}}
 
 # Output オセロはこのクラスを用いて出力をする {{{
@@ -37,8 +43,8 @@ class OutputInterface
 
   show_board: (board)->
     height = board.cells.length
-    width  = board.cells[0].length
     for x in [0...height]
+      width  = board.cells[x].length
       for y in [0...width]
         @show_cell board.cells[x][y].piece, [x, y]
 
@@ -60,8 +66,7 @@ class Html extends OutputInterface
     $("<div class=\"piece #{color}\" id=#{pos[0]}_#{pos[1]}>")
       .css({
         backgroundPosition: '-' + x + 'px -' + y + 'px',
-        top : x + 'px',
-        left: y + 'px'
+        top : x + 'px', left: y + 'px'
       }).hover(
         ->$(@).fadeTo("fast", 0.5),
         ->$(@).fadeTo("fast", 1.0)
@@ -196,6 +201,10 @@ class Judge
 
 # Rule: ボードを操作する際に必要な条件を持つクラス {{{
 class Rule
+  constructor: ()->
+    @piece_num = @b_width * @b_height
+    @user_piece_num = @piece_num / @player_num
+
   is_puttable: (pos, board)->
     [x, y] = pos
     return false unless @_is_inboard(pos)
@@ -233,14 +242,19 @@ class NormalRule extends Rule
   b_width  : 8
   b_height : 8
   player_num : 2
+
+class HogeRule extends Rule
+  b_width  : 6
+  b_height : 6
+  player_num : 2
   constructor: ()->
-    @piece_num = @b_width * @b_height
-    @user_piece_num = @piece_num / @player_num
+    super
 
 class RuleCreater
   @make_rule: (name)->
     switch name
       when "normal" then new NormalRule
+      when "hoge" then new HogeRule
       # you should to add the original rule class
 # }}}
 
@@ -254,4 +268,10 @@ class Debug
         console.debug cell.piece.color
 # }}}
 
-@othello = new Othello
+window.othello = new Othello
+$ ->
+  $('#start').click ->
+    window.othello.exec()
+  $('#reset').click ->
+    window.othello.reset()
+
