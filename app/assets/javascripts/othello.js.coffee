@@ -104,7 +104,7 @@ class Console extends OutputInterface
   constructor: ->
 
   show_cell: (piece, pos)->
-    view = this._get_piece_type piece
+    view = @_get_piece_type piece
     console.debug "[#{pos[0]}:#{pos[1]}]#{view}"
 # }}}
 
@@ -175,7 +175,7 @@ class Judge
     for i in [-1..1]
       for j in [-1..1]
         continue if i is 0 and j is 0
-        result = true if this._reverse_piece pos, [i, j], @board.cells, piece
+        result = true if @_reverse_piece pos, [i, j], @board.cells, piece
     @outputer.update_board @board
     result
 
