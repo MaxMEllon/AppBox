@@ -2,7 +2,7 @@
 class Othello
   constructor: ->
     # TODO: htmlの要素からルールを選択できるように
-    @rule      = new NormalRule
+    @rule      = RuleCreater.make_rule "normal"
     @board     = new Board @rule
     @judge     = new Judge @rule, @board
     @outputer  = new Html
@@ -233,6 +233,12 @@ class NormalRule extends Rule
   constructor: ()->
     @piece_num = @b_width * @b_height
     @user_piece_num = @piece_num / @player_num
+
+class RuleCreater
+  @make_rule: (name)->
+    switch name
+      when "normal" then new NormalRule
+      # you should to add the original rule class
 # }}}
 
 # Debug: {{{
