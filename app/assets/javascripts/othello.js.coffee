@@ -15,6 +15,7 @@ class Othello
     @players[0].put_piece()
   reset: ->
     $('.piece').remove()
+    $('iframe:first').contents().find('p').remove()
 # }}}
 
 # InputInterface ユーザはこのクラスを用いて座標の入力をする{{{
@@ -32,8 +33,7 @@ class Mouse extends InputInterface
     console.debug "clicked : ", pos, @order
     piece = new Piece(@order%2)
     if @judge.reverse pos, piece
-      $('<p>').text('[' + @order + ']' + piece.color + pos)
-        .appendTo $('iframe:first').contents().find('body')
+      Debug.html '[' + @order + ']' + pos + ':' + piece.color
       @order++
 # }}}
 
@@ -266,6 +266,9 @@ class Debug
     for line in cells
       for cell in line
         console.debug cell.piece.color
+  @html: (text)->
+    $('<p>').text(text)
+      .appendTo $('iframe:first').contents().find('body')
 # }}}
 
 window.othello = new Othello
