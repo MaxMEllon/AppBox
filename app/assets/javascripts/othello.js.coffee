@@ -70,8 +70,7 @@ class Html extends OutputInterface
       }).hover(
         ->$(@).fadeTo("fast", 0.5),
         ->$(@).fadeTo("fast", 1.0)
-      ).text piece.color + pos
-      .appendTo $('div#othello')
+      ).appendTo $('div#othello')
 
   update_board: (board)->
     for x in [0...board.height]
@@ -83,7 +82,6 @@ class Html extends OutputInterface
     content = $(id)
     content.removeClass "void"
     pos = Pos.id2pos id
-    content.text color + pos
     for c in Color.colors
       content.removeClass c
     content.addClass color
