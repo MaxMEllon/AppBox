@@ -14,7 +14,7 @@ class Othello
     @players[0].put_piece()
   reset: ->
     $('.piece').remove()
-    $('iframe:first').contents().find('p').remove()
+    $('iframe:first').contents().find('li').remove()
 # }}}
 
 # InputInterface ユーザはこのクラスを用いて座標の入力をする{{{
@@ -161,11 +161,10 @@ class Board
       @cells[i] = []
       for j in [0...@width]
         @cells[i][j] = new Cell
-    [x, y] = [@height/2, @width/2-1]
-    @cells[x][x] = new Cell(0)
-    @cells[y][y] = new Cell(0)
-    @cells[x][y] = new Cell(1)
-    @cells[y][x] = new Cell(1)
+    @cells[@height/2][@width/2]     = new Cell(0)
+    @cells[@height/2-1][@width/2-1] = new Cell(0)
+    @cells[@height/2][@width/2-1]   = new Cell(1)
+    @cells[@height/2-1][@width/2]     = new Cell(1)
 
 # Cell: オセロのマスを生成するクラス,置かれているピースの情報を知っている {{{
 class Cell
@@ -260,8 +259,8 @@ class NormalRule extends Rule
     super()
 
 class HogeRule extends Rule
-  b_width  : 6
-  b_height : 6
+  b_width  : 4
+  b_height : 8
   player_num : 2
   constructor: ()->
     super()
@@ -283,7 +282,7 @@ class Debug
       for cell in line
         console.debug cell.piece.color
   @html: (text)->
-    $('<p>').text(text)
+    $('<li>').text(text)
       .appendTo $('iframe:first').contents().find('body')
 # }}}
 
