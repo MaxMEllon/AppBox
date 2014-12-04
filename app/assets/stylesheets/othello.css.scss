@@ -56,13 +56,12 @@ div#content {
   }
   div#log {
     // constant
-    $log-height: 200px;
-    $log-width:  700px;
+    $log-height: 400px;
+    $log-width:  200px;
     //
     height: $log-height;
     width:  $log-width;
-    margin-left: $board-left;
-    margin-top:  $board-height + 30;
+    margin-left: $board-left + 50;
     iframe#log-content {
       padding: 0px;
       margin:  0px;

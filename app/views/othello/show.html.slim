@@ -2,20 +2,22 @@ div#content
   #controller
     form.form-inline
       .form-group
+        select#rule.form-control
+          option
+            |normal
+          option
+            |hoge
+      .form-group
         #start.box.btn.btn-lg.btn-info
           |スタート
         #reset.box.btn.btn-lg.btn-danger
           |リセット
-      .form-group
-        select.form-control
-          option
-            |hoge
   #othello.box
-  #log
+  #log.box
     iframe#log-content
       doctype html
       html lang="en"
         head
-        body#content
+        body
 
 
