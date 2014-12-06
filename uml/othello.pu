@@ -1,0 +1,9 @@
+@startuml{othello.png}
+class Canvas
+class "Othello" as Othello {
+  rule_name: String [1]
+  exec()
+}
+@enduml
+
+
