@@ -1,9 +1,23 @@
 @startuml{othello.png}
-class Canvas
-class "Othello" as Othello {
-  rule_name: String [1]
-  exec()
+class Othello {
 }
+abstract State {
+}
+abstract OutputInterface {
+  +show_board()
+  #{abstract} show_sell()
+  -get_piece_type()
+}
+class Html {
+  -image_size
+
+  +show_board()
+  #show_sell()
+  -get_piece_type()
+}
+
+Othello o-- State
+State --> OutputInterface
+OutputInterface <|-- Html
+
 @enduml
-
-
