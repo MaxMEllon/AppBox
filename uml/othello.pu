@@ -7,6 +7,17 @@ abstract State {
 }
 
 class Board {
+  +height: Integer
+  +widht: Integer
+}
+
+class Cell {
+}
+
+class Piece {
+}
+class Color {
+  colors: String
 }
 
 class Pos {
@@ -20,6 +31,8 @@ class Ready {
 }
 
 class Play {
+  +next()
+  +exec()
 }
 
 class Result {
@@ -32,23 +45,32 @@ abstract OutputInterface {
 }
 
 class Html {
-  -image_size
+  -image_size: Integer
 
   +show_board()
   #show_sell()
   -get_piece_type()
 }
+class Player {
+  +piece
+  +put_piece()
+}
 
-Othello o-- State
-Othello --> Player
+Othello "1" o-- "*" State
 
 State <|-- Ready
 State <|-- Play
 State <|-- Result
-State --> OutputInterface
-State --> Board
+State "1" --> "1" OutputInterface
+State "1" --> "1" Board
+State "1" --> "2..4" Player
+State "1" --> "1" Rule
 
-Board --> Pos
+Board "1" --> "1" Pos
+Board "1" o-- "*" Cell
+
+Cell "1" o-- "1" Piece
+Piece "1" o-- "1" Color
 
 OutputInterface <|-- Html
 
