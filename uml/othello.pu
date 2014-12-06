@@ -1,13 +1,36 @@
 @startuml{othello.png}
+
 class Othello {
 }
+
 abstract State {
 }
+
+class Board {
+}
+
+class Pos {
+  +{static} pos2id()
+  +{static} id2pos()
+  +{static} pos2int()
+  +{static} calc_pos()
+}
+
+class Ready {
+}
+
+class Play {
+}
+
+class Result {
+}
+
 abstract OutputInterface {
   +show_board()
   #{abstract} show_sell()
   -get_piece_type()
 }
+
 class Html {
   -image_size
 
@@ -17,7 +40,16 @@ class Html {
 }
 
 Othello o-- State
+Othello --> Player
+
+State <|-- Ready
+State <|-- Play
+State <|-- Result
 State --> OutputInterface
+State --> Board
+
+Board --> Pos
+
 OutputInterface <|-- Html
 
 @enduml
