@@ -8,14 +8,13 @@ class Othello
     @rule      = RuleCreater.make_rule rule_name
     @board     = new Board @rule
     @judge     = new Judge @rule, @board
+    @players   = PlayerCreater.make_players @rule.player_num, @judge
     @outputer  = new Html
-    # TODO: htmlの要素からプレイヤーを選択できるように
-    @players = [new User(@judge, 0), new User(@judge, 1)]
     @outputer.show_board @board
     @players[0].put_piece()
   reset: ->
     $('.piece').remove()
-    $('iframe:first').contents().find('p').remove()
+    $('iframe:first').contents().find('li').remove()
 # }}}
 
 # InputInterface ユーザはこのクラスを用いて座標の入力をする{{{
@@ -37,7 +36,7 @@ class Mouse extends InputInterface
       @order++
 # }}}
 
-# Output オセロはこのクラスを用いて出力をする {{{
+# Output オセロはこのクラスを用いて出力をする 静的クラスのほうがいい? {{{
 class OutputInterface
   show_cell: (piece, pos)->
 
@@ -85,7 +84,9 @@ class Html extends OutputInterface
     for c in Color.colors
       content.removeClass c
     content.addClass color
+# }}}
 
+# pos: 座標クラス {{{
 class Pos
   @margin_top  : 50
   @margin_left : 0
@@ -116,13 +117,13 @@ class Console extends OutputInterface
 
 # Player ボードにコマを置くクラス {{{
 class Player
-  put_piece: ->
-
-class User extends Player
   constructor: (judge, @order)->
     @inputer   = new Mouse judge
     @piece     = new Piece order
 
+  put_piece: ->
+
+class User extends Player
   put_piece: ()->
     pieces = $('.piece')
     for piece in pieces
@@ -131,8 +132,23 @@ class User extends Player
         @inputer.input pos, @piece
 
 class Cpu extends Player
-  constructor: (piece_num, order)->
-    @inputer   = new Ai
+
+class SampleAI
+
+class PlayerCreater
+  @make_players: (num, judge)->
+    players = []
+    for k in [0...num]
+      # TODO: ここでHTMLの要素参照してplayer_type取得
+      console.debug judge
+      players.push PlayerCreater.make_player 'user', judge, k
+    console.debug players
+    players
+
+  @make_player: (type, judge, order)->
+    switch type
+      when 'user' then new User judge, order
+      when 'cpu'  then new Cpu  judge, order
 # }}}
 
 # Board オセロの各マス目を生成するクラス {{{
@@ -145,11 +161,10 @@ class Board
       @cells[i] = []
       for j in [0...@width]
         @cells[i][j] = new Cell
-    [x, y] = [@height/2, @width/2-1]
-    @cells[x][x] = new Cell(0)
-    @cells[y][y] = new Cell(0)
-    @cells[x][y] = new Cell(1)
-    @cells[y][x] = new Cell(1)
+    @cells[@height/2][@width/2]     = new Cell(0)
+    @cells[@height/2-1][@width/2-1] = new Cell(0)
+    @cells[@height/2][@width/2-1]   = new Cell(1)
+    @cells[@height/2-1][@width/2]     = new Cell(1)
 
 # Cell: オセロのマスを生成するクラス,置かれているピースの情報を知っている {{{
 class Cell
@@ -240,13 +255,15 @@ class NormalRule extends Rule
   b_width  : 8
   b_height : 8
   player_num : 2
+  constructor: ()->
+    super()
 
 class HogeRule extends Rule
-  b_width  : 6
-  b_height : 6
+  b_width  : 4
+  b_height : 8
   player_num : 2
   constructor: ()->
-    super
+    super()
 
 class RuleCreater
   @make_rule: (name)->
@@ -265,7 +282,7 @@ class Debug
       for cell in line
         console.debug cell.piece.color
   @html: (text)->
-    $('<p>').text(text)
+    $('<li>').text(text)
       .appendTo $('iframe:first').contents().find('body')
 # }}}
 
