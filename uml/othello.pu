@@ -4,7 +4,7 @@ class Othello {
   rule: Rule
 }
 
-abstract State {
+abstract GameState {
   board: Board
   judge: Judge
   players :Player[]
@@ -29,10 +29,10 @@ class Color {
 }
 
 class Pos {
-  +{static} pos2id()
-  +{static} id2pos()
-  +{static} pos2int()
-  +{static} calc_pos()
+  +{static} pos2id(): String
+  +{static} id2pos(): [x, y]
+  +{static} pos2int(): [x, y]
+  +{static} calc_pos(): [height, width]
 }
 
 class Ready {
@@ -106,30 +106,22 @@ class Judge {
 
 ' Rule {{{
 abstract Rule {
-  +piece_num: Integer
-  +board_width: Integer
-  +board_height: Integer
+  +{abstruct}piece_num: Integer
+  +{abstruct}board_width: Integer
+  +{abstruct}board_height: Integer
 
-  +is_puttable?(pos: [x, y]): Bool
-  +is_reverseble?(pos: [x, y], piece: Piece)
-  +is_same_piece?(piece: Piece, piece: Piece)
+  +{abstruct}is_puttable?(pos: [x, y]): Bool
+  +{abstruct}is_reverseble?(pos: [x, y], piece: Piece)
+  +{abstruct}is_same_piece?(piece: Piece, piece: Piece)
 }
 
 class NormalRule {
-  +piece_num: Integer
-  +board_width: Integer
-  +board_height: Integer
-
   +is_puttable?(pos: [x, y])
   +is_reverseble?(pos: [x, y], piece: Piece)
   +is_same_piece?(piece: Piece, piece: Piece)
 }
 
 class OriginalRule {
-  +piece_num: Integer
-  +board_width: Integer
-  +board_height: Integer
-
   +is_puttable?(pos: [x, y])
   +is_reverseble?(pos: [x, y], piece: Piece)
   +is_same_piece?(piece: Piece, piece: Piece)
@@ -137,6 +129,7 @@ class OriginalRule {
 
 class Recoder {
   +order: Integer
+  +piece
   +recode(pos: [x, y], piece: Piece)
 }
 
@@ -147,18 +140,17 @@ class RuleCreater {
 ' }}}
 
 ' 関連 {{{
-Othello "1" o-- "*" State
+Othello "1" o-- "*" GameState
 Othello "1" o-- "1" Judge
 Othello "1" --> "1" RuleCreater
 
-State <|-- Ready
-State <|-- Play
-State <|-- Replay
-State <|-- Result
-State "1" --> "1" PlayerCreater
-State "1" --> "1" OutputInterface
-
-play "1" --> "1" Recoder
+GameState "1" --> "1" Recoder
+GameState <|-- Ready
+GameState <|-- Play
+GameState <|-- Replay
+GameState <|-- Result
+GameState "1" --> "1" PlayerCreater
+GameState "1" --> "1" OutputInterface
 
 Board "1" *-- "*" Cell
 
