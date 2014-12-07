@@ -3,6 +3,6 @@
 
 - 作成中のもの
     - オセロ
-    ![オセロ](uml/othello.png)
+    ![オセロ](develop/uml/othello.png)
     
 - 完成したもの
