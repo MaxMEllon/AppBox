@@ -1,11 +1,11 @@
 @startuml{othello.png}
 
 class Othello {
-  rule: Rule
-  players :Player[]
 }
 
 abstract State {
+  judge: Judge
+  players :Player[]
 }
 
 class Board {
@@ -146,19 +146,15 @@ class RuleCreater {
 
 ' 関連 {{{
 Othello "1" o-- "*" State
-Othello "1" --> "1" PlayerCreater
-Othello "1" --> "1" RuleCreater
 
 State <|-- Ready
 State <|-- Play
 State <|-- Replay
 State <|-- Result
 
+State "1" --> "1" PlayerCreater
+State "1" --> "1" RuleCreater
 State "1" --> "1" OutputInterface
-State "1" --> "1" Board
-State "1" --> "2..4" Player
-
-Replay "1" --> "1" Recoder
 
 Board "1" --> "1" Pos
 Board "1" *-- "*" Cell
