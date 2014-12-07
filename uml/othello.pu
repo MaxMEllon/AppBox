@@ -1,6 +1,8 @@
 @startuml{othello.png}
 
 class Othello {
+  rule: Rule
+  players :Player[]
 }
 
 abstract State {
@@ -39,6 +41,13 @@ class Play {
   +exec()
 }
 
+class Replay {
+  +load()
+  +play(interval: Integer)
+  +next()
+  +prev()
+}
+
 class Result {
 }
 
@@ -61,22 +70,33 @@ abstract Player {
   +{abstract} piece
   +{abstract} put_piece()
 }
+
 class User {
   +piece
   +put_piece()
 }
-class User {
+
+class Cpu {
   +piece
+  +dicide_pos()
   +put_piece()
+}
+
+abstract Strategy {
+  +{abstract} othello_strategy()
+}
+class OriginalStrategy {
+
+}
+
+class PlayerCreater {
+  +{static} make_player()
 }
 ' }}}
 
-class Judge {
+abstruct Judge {
   +reverce()
   -reverce_piece()
-}
-class PlayerCreater {
-  +{static} make_player()
 }
 
 ' Rule {{{
@@ -85,9 +105,9 @@ class Rule {
   +board_width: Integer
   +board_height: Integer
 
-  +is_puttable?()
-  +is_reverseble?()
-  +is_same_piece?()
+  +is_puttable?(pos: [x, y])
+  +is_reverseble?(pos: [x, y], piece: Piece)
+  +is_same_piece?(piece: Piece, piece: Piece)
 }
 
 class NormalRule {
@@ -95,9 +115,9 @@ class NormalRule {
   +board_width: Integer
   +board_height: Integer
 
-  +is_puttable?()
-  +is_reverseble?()
-  +is_same_piece?()
+  +is_puttable?(pos: [x, y])
+  +is_reverseble?(pos: [x, y], piece: Piece)
+  +is_same_piece?(piece: Piece, piece: Piece)
 }
 
 class OriginalRule {
@@ -105,13 +125,15 @@ class OriginalRule {
   +board_width: Integer
   +board_height: Integer
 
-  +is_puttable?()
-  +is_reverseble?()
-  +is_same_piece?()
+  +is_puttable?(pos: [x, y])
+  +is_reverseble?(pos: [x, y], piece: Piece)
+  +is_same_piece?(piece: Piece, piece: Piece)
 }
+
 class RuleCreater {
   +{static} make_rule
 }
+
 ' }}}
 
 ' 関連 {{{
@@ -123,6 +145,7 @@ Othello "1" --> "1" RuleCreater
 
 State <|-- Ready
 State <|-- Play
+State <|-- Replay
 State <|-- Result
 
 Board "1" --> "1" Pos
@@ -135,6 +158,7 @@ Rule <|-- OriginalRule
 PlayerCreater ..> Player : {use}
 Player <|-- User
 Player <|-- Cpu
+Player "*" --> 1 Judge
 
 Cell  "1" o-- "1" Piece
 Piece "1" o-- "1" Color
