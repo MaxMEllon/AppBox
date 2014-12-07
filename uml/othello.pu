@@ -36,11 +36,11 @@ class Pos {
 }
 
 class Ready {
+  +start()
 }
 
 class Play {
   +next()
-  +exec()
 }
 
 class Replay {
@@ -51,6 +51,7 @@ class Replay {
 }
 
 class Result {
+  +end
 }
 
 ' Outputinterface {{{
@@ -144,13 +145,13 @@ Othello "1" o-- "*" GameState
 Othello "1" o-- "1" Judge
 Othello "1" --> "1" RuleCreater
 
-GameState "1" --> "1" Recoder
 GameState <|-- Ready
 GameState <|-- Play
 GameState <|-- Replay
 GameState <|-- Result
-GameState "1" --> "1" PlayerCreater
 GameState "1" --> "1" OutputInterface
+Ready "1" --> "1" PlayerCreater
+Play "1" --> "1" Recoder
 
 Board "1" *-- "*" Cell
 
