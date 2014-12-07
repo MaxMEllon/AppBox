@@ -8,7 +8,7 @@ abstract State {
 
 class Board {
   +height: Integer
-  +widht: Integer
+  +widht:  Integer
 }
 
 class Cell {
@@ -56,14 +56,27 @@ class Html {
   -get_piece_type()
 }
 
-class Player {
+' Player {{{
+abstract Player {
+  +{abstract} piece
+  +{abstract} put_piece()
+}
+class User {
   +piece
   +put_piece()
 }
+class User {
+  +piece
+  +put_piece()
+}
+' }}}
 
 class Judge {
   +reverce()
   -reverce_piece()
+}
+class PlayerCreater {
+  +{static} make_player()
 }
 
 ' Rule {{{
@@ -75,9 +88,6 @@ class Rule {
   +is_puttable?()
   +is_reverseble?()
   +is_same_piece?()
-  -is_putted?()
-  -is_empty?()
-  -is_inboard?()
 }
 
 class NormalRule {
@@ -88,9 +98,6 @@ class NormalRule {
   +is_puttable?()
   +is_reverseble?()
   +is_same_piece?()
-  -is_putted?()
-  -is_empty?()
-  -is_inboard?()
 }
 
 class OriginalRule {
@@ -101,18 +108,18 @@ class OriginalRule {
   +is_puttable?()
   +is_reverseble?()
   +is_same_piece?()
-  -is_putted?()
-  -is_empty?()
-  -is_inboard?()
+}
+class RuleCreater {
+  +{static} make_rule
 }
 ' }}}
 
 ' 関連 {{{
 Othello "1" o-- "*" State
 Othello "1" --> "1" OutputInterface
-Othello "1" --> "1" Board
-Othello "1" --> "2..4" Player
-Othello "1" --> "1" Rule
+Othello "1" o-- "1" Board
+Othello "1" --> "1" PlayerCreater
+Othello "1" --> "1" RuleCreater
 
 State <|-- Ready
 State <|-- Play
@@ -120,6 +127,14 @@ State <|-- Result
 
 Board "1" --> "1" Pos
 Board "1" o-- "*" Cell
+
+RuleCreater ..> Rule : {use}
+Rule <|-- NormalRule
+Rule <|-- OriginalRule
+
+PlayerCreater ..> Player : {use}
+Player <|-- User
+Player <|-- Cpu
 
 Cell  "1" o-- "1" Piece
 Piece "1" o-- "1" Color
