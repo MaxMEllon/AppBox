@@ -92,11 +92,12 @@ class OriginalStrategy {
 }
 
 class PlayerCreater {
-  +{static} make_player(): Player
+  +{static} make_player()
 }
 ' }}}
 
-abstract Judge {
+class Judge {
+  -piece: Piece
   +reverce()
   -reverce_piece()
 }
@@ -108,8 +109,8 @@ class Rule {
   +board_height: Integer
 
   +is_puttable?(pos: [x, y]): Bool
-  +is_reverseble?(pos: [x, y], piece: Piece): Bool
-  +is_same_piece?(piece: Piece, piece: Piece): Bool
+  +is_reverseble?(pos: [x, y], piece: Piece)
+  +is_same_piece?(piece: Piece, piece: Piece)
 }
 
 class NormalRule {
@@ -167,6 +168,8 @@ PlayerCreater ..> Player : {use}
 Player <|-- User
 Player <|-- Cpu
 Player "*" --> "1" Judge
+
+Judge "1" --> "1" Rule
 Cpu "1" *-- "1" Strategy
 Strategy <|-- OriginalStrategy
 
