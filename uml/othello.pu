@@ -1,6 +1,7 @@
 @startuml{othello.png}
 
 class Othello {
+  rule: Rule
 }
 
 abstract State {
@@ -154,19 +155,19 @@ State <|-- Ready
 State <|-- Play
 State <|-- Replay
 State <|-- Result
-
 State "1" --> "1" PlayerCreater
 State "1" --> "1" OutputInterface
 
-Board "1" --> "1" Pos
+play "1" --> "1" Recoder
+
 Board "1" *-- "*" Cell
 
-RuleCreater ..> Rule : {use}
+RuleCreater ..> Rule : {create}
 Rule <|-- NormalRule
 Rule <|-- OriginalRule
-Rule "1" o.. "1" Board
+Rule "1" o-- "1" Board
 
-PlayerCreater ..> Player : {use}
+PlayerCreater ..> Player : {create}
 Player <|-- User
 Player <|-- Cpu
 
