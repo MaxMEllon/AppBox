@@ -3,6 +3,6 @@
 
 - 作成中のもの
     - オセロ
-    ![オセロ](develop/uml/othello.png)
+    ![オセロ](https://raw.githubusercontent.com/MaxMEllon/AppBox/develop/uml/othello.png)
     
 - 完成したもの
