@@ -4,6 +4,7 @@ class Othello {
 }
 
 abstract State {
+  board: Board
   judge: Judge
   players :Player[]
 }
@@ -103,7 +104,7 @@ class Judge {
 }
 
 ' Rule {{{
-class Rule {
+abstract Rule {
   +piece_num: Integer
   +board_width: Integer
   +board_height: Integer
@@ -146,6 +147,8 @@ class RuleCreater {
 
 ' 関連 {{{
 Othello "1" o-- "*" State
+Othello "1" o-- "1" Judge
+Othello "1" --> "1" RuleCreater
 
 State <|-- Ready
 State <|-- Play
@@ -153,7 +156,6 @@ State <|-- Replay
 State <|-- Result
 
 State "1" --> "1" PlayerCreater
-State "1" --> "1" RuleCreater
 State "1" --> "1" OutputInterface
 
 Board "1" --> "1" Pos
@@ -162,14 +164,12 @@ Board "1" *-- "*" Cell
 RuleCreater ..> Rule : {use}
 Rule <|-- NormalRule
 Rule <|-- OriginalRule
+Rule "1" o.. "1" Board
 
 PlayerCreater ..> Player : {use}
 Player <|-- User
 Player <|-- Cpu
-Player "*" --> "1" Judge
 
-Judge "1" --> "1" Rule
-Judge "1" --> "1" Recoder
 Cpu "1" *-- "1" Strategy
 Strategy <|-- OriginalStrategy
 
