@@ -1,0 +1,176 @@
+@startuml{othello.png}
+
+class Othello {
+  +rule: Rule
+}
+
+abstract GameState {
+  +board: Board
+  +judge: Judge
+  +players :Player[]
+}
+
+class Board {
+  +height: Integer
+  +widht:  Integer
+}
+
+class Cell {
+}
+
+class Piece {
+}
+
+class Piece {
+}
+
+class Color {
+  colors: String[]
+}
+
+' class Pos {
+'   +{static} pos2id(): String
+'   +{static} id2pos(): [x, y]
+'   +{static} pos2int(): [x, y]
+'   +{static} calc_pos(): [height, width]
+' }
+
+class Ready {
+  +start()
+}
+
+class Play {
+  +next()
+}
+
+class Replay {
+  +load()
+  +play(interval: Integer)
+  +next()
+  +prev()
+}
+
+class Result {
+  +end
+}
+
+' Outputinterface {{{
+abstract OutputInterface {
+  +show_board()
+  #{abstract} show_sell()
+  -get_piece_type()
+}
+
+class Html {
+  -image_size: Integer
+
+  +show_board()
+  #show_sell()
+  -get_piece_type()
+}
+' }}}
+
+' Player {{{
+abstract Player {
+  +{abstract} piece
+  +{abstract} put_piece()
+}
+
+class User {
+  +piece
+  +put_piece()
+}
+
+class Cpu {
+  +piece
+  +dicide_pos()
+  +put_piece()
+}
+
+abstract Strategy {
+  +{abstract} othello_strategy()
+}
+class OriginalStrategy {
+
+}
+
+class PlayerCreater {
+  +{static} make_player()
+}
+' }}}
+
+class Judge {
+  -rule: Rule
+  +reverce(piece: Piece, pos: [x, y]): Bool
+  -reverce_piece()
+}
+
+' Rule {{{
+abstract Rule {
+  +{abstruct} piece_num: Integer
+  +{abstruct} board_width: Integer
+  +{abstruct} board_height: Integer
+
+  +{abstruct} is_puttable?(pos: [x, y]): Bool
+  +{abstruct} is_reverseble?(pos: [x, y], piece: Piece): Bool
+  +{abstruct} is_same_piece?(piece: Piece, piece: Piece): Bool
+}
+
+class NormalRule {
+  +is_puttable?(pos: [x, y])
+  +is_reverseble?(pos: [x, y], piece: Piece)
+  +is_same_piece?(piece: Piece, piece: Piece)
+}
+
+class OriginalRule {
+  +is_puttable?(pos: [x, y])
+  +is_reverseble?(pos: [x, y], piece: Piece)
+  +is_same_piece?(piece: Piece, piece: Piece)
+}
+
+class Recoder {
+  +order: Integer
+  +piece
+  +recode(pos: [x, y], piece: Piece)
+}
+
+class RuleCreater {
+  +{static} make_rule(): Rule
+}
+
+' }}}
+
+' 関連 {{{
+Othello "1" o-- "*" GameState
+Othello "1" o-- "1" Judge
+Othello "1" --> "1" RuleCreater
+
+GameState <|-- Ready
+GameState <|-- Play
+GameState <|-- Replay
+GameState <|-- Result
+GameState "1" --> "1" OutputInterface
+Ready "1" --> "1" PlayerCreater
+Play "1" --> "1" Recoder
+
+Board "1" *-- "*" Cell
+
+RuleCreater ..> Rule : {create}
+Rule <|-- NormalRule
+Rule <|-- OriginalRule
+Rule "1" o-- "1" Board
+
+PlayerCreater ..> Player : {create}
+Player <|-- User
+Player <|-- Cpu
+
+Cpu "1" *-- "1" Strategy
+Strategy <|-- OriginalStrategy
+
+Cell  "1" o-- "1" Piece
+Piece "1" o-- "1" Color
+
+OutputInterface <|-- Html
+' }}}
+
+@enduml
