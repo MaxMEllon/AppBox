@@ -94,7 +94,7 @@ class PlayerCreater {
 }
 ' }}}
 
-abstruct Judge {
+abstract Judge {
   +reverce()
   -reverce_piece()
 }
@@ -158,7 +158,7 @@ Rule <|-- OriginalRule
 PlayerCreater ..> Player : {use}
 Player <|-- User
 Player <|-- Cpu
-Player "*" --> 1 Judge
+Player "*" --> "1" Judge
 
 Cell  "1" o-- "1" Piece
 Piece "1" o-- "1" Color
