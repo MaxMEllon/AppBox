@@ -146,7 +146,6 @@ class RuleCreater {
 
 ' 関連 {{{
 Othello "1" o-- "*" State
-Othello "1" o-- "1" Board
 Othello "1" --> "1" PlayerCreater
 Othello "1" --> "1" RuleCreater
 
@@ -156,6 +155,10 @@ State <|-- Replay
 State <|-- Result
 
 State "1" --> "1" OutputInterface
+State "1" --> "1" Board
+State "1" --> "2..4" Player
+
+Replay "1" --> "1" Recoder
 
 Board "1" --> "1" Pos
 Board "1" *-- "*" Cell
@@ -170,6 +173,7 @@ Player <|-- Cpu
 Player "*" --> "1" Judge
 
 Judge "1" --> "1" Rule
+Judge "1" --> "1" Recoder
 Cpu "1" *-- "1" Strategy
 Strategy <|-- OriginalStrategy
 
