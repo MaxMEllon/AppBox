@@ -16,6 +16,10 @@ class Cell {
 
 class Piece {
 }
+
+class Piece {
+}
+
 class Color {
   colors: String
 }
@@ -51,27 +55,76 @@ class Html {
   #show_sell()
   -get_piece_type()
 }
+
 class Player {
   +piece
   +put_piece()
 }
 
+class Judge {
+  +reverce()
+  -reverce_piece()
+}
+
+' Rule {{{
+class Rule {
+  +piece_num: Integer
+  +board_width: Integer
+  +board_height: Integer
+
+  +is_puttable?()
+  +is_reverseble?()
+  +is_same_piece?()
+  -is_putted?()
+  -is_empty?()
+  -is_inboard?()
+}
+
+class NormalRule {
+  +piece_num: Integer
+  +board_width: Integer
+  +board_height: Integer
+
+  +is_puttable?()
+  +is_reverseble?()
+  +is_same_piece?()
+  -is_putted?()
+  -is_empty?()
+  -is_inboard?()
+}
+
+class OriginalRule {
+  +piece_num: Integer
+  +board_width: Integer
+  +board_height: Integer
+
+  +is_puttable?()
+  +is_reverseble?()
+  +is_same_piece?()
+  -is_putted?()
+  -is_empty?()
+  -is_inboard?()
+}
+' }}}
+
+' 関連 {{{
 Othello "1" o-- "*" State
+Othello "1" --> "1" OutputInterface
+Othello "1" --> "1" Board
+Othello "1" --> "2..4" Player
+Othello "1" --> "1" Rule
 
 State <|-- Ready
 State <|-- Play
 State <|-- Result
-State "1" --> "1" OutputInterface
-State "1" --> "1" Board
-State "1" --> "2..4" Player
-State "1" --> "1" Rule
 
 Board "1" --> "1" Pos
 Board "1" o-- "*" Cell
 
-Cell "1" o-- "1" Piece
+Cell  "1" o-- "1" Piece
 Piece "1" o-- "1" Color
 
 OutputInterface <|-- Html
+' }}}
 
 @enduml
