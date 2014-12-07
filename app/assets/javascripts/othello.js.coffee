@@ -2,50 +2,70 @@ window.othello = {}
 
 # Othello 各インスタンスを生成, オセロの実行を行う{{{
 class Othello
-  exec: ->
-    @reset()
+  run: ->
+    @ready()
+    @state = new Play @rule, @judge
+    @state.exec()
+
+  ready: ->
     rule_name  = $('#rule')[0].value
     @rule      = RuleCreater.make_rule rule_name
-    @board     = new Board @rule
-    @judge     = new Judge @rule, @board
-    @players   = PlayerCreater.make_players @rule.player_num, @judge
-    @outputer  = new Html
-    @outputer.show_board @board
-    @players[0].put_piece()
-  reset: ->
-    $('.piece').remove()
-    $('iframe:first').contents().find('li').remove()
+    @judge     = new Judge @rule
+    @state = new Ready @rule, @judge
+    @state.exec()
 # }}}
 
-# InputInterface ユーザはこのクラスを用いて座標の入力をする{{{
-class InputInterface
+# GameState  {{{
+class GameState
+  constructor: (@rule, @judge)->
+    @board = @rule.board
+    @players = PlayerCreater.make_players @rule.player_num, @judge
+    @outputer = new Html
+    @pos = []
+    @order = 0
+  exec: ->
 
-class Ai extends InputInterface
-  constructor: ->
-  select_piece_listener: ->
+class Ready extends GameState
+  exec: ->
+    @outputer.set_board @board
 
-class Mouse extends InputInterface
-  order : 0
-  constructor: (@judge)->
+class Play extends GameState
+  exec: ->
+    @players[@order % @rule.player_num].decide_pos @
 
-  input: (pos, piece)->
-    console.debug "clicked : ", pos, @order
-    piece = new Piece(@order%2)
-    if @judge.reverse pos, piece
-      Debug.html '[' + @order + ']' + pos + ':' + piece.color
+  next: ->
+    console.debug "clicked : ", @pos, @order
+    piece = @players[@order % @rule.player_num].piece
+    if @judge.reverse @pos, piece
+      Debug.html '[' + @order + ']' + @pos + ':' + piece.color
       @order++
+    @outputer.update_board @board
+
+class Reset extends GameState
+  exec: ->
+
+class Replay extends GameState
+  exec: ->
+# }}}
+
+# Recoder {{{
+class Recoder
+  @order
+  constructor: (players)->
+    @order = 0
+  recode: (pos, piece)->
 # }}}
 
 # Output オセロはこのクラスを用いて出力をする 静的クラスのほうがいい? {{{
 class OutputInterface
-  show_cell: (piece, pos)->
+  set_cell: (piece, pos)->
 
-  show_board: (board)->
+  set_board: (board)->
     height = board.cells.length
     for x in [0...height]
       width  = board.cells[x].length
       for y in [0...width]
-        @show_cell board.cells[x][y].piece, [x, y]
+        @set_cell board.cells[x][y].piece, [x, y]
 
   _get_piece_type: (piece)->
     color = 'void'  if piece.color == new Piece(-1).color
@@ -58,10 +78,9 @@ class Html extends OutputInterface
   constructor: ()->
     @image_size = 50
 
-  show_cell: (piece, pos)->
+  set_cell: (piece, pos)->
     [x, y] = Pos.calc_pos pos, @image_size
     color = @_get_piece_type piece
-    # TODO: スッキリ書く方法があればそれに変更
     $("<div class=\"piece #{color}\" id=#{pos[0]}_#{pos[1]}>")
       .css({
         backgroundPosition: '-' + x + 'px -' + y + 'px',
@@ -107,33 +126,25 @@ class Pos
     y = pos[1] * size + @margin_left
     [x, y]
 
-class Console extends OutputInterface
-  constructor: ->
-
-  show_cell: (piece, pos)->
-    view = @_get_piece_type piece
-    console.debug "[#{pos[0]}:#{pos[1]}]#{view}"
 # }}}
 
 # Player ボードにコマを置くクラス {{{
 class Player
   constructor: (judge, @order)->
-    @inputer   = new Mouse judge
     @piece     = new Piece order
 
-  put_piece: ->
+  decide_pos: ()->
 
 class User extends Player
-  put_piece: ()->
+  decide_pos: (play)->
     pieces = $('.piece')
     for piece in pieces
       piece.onclick = (e)=>
-        pos = Pos.pos2int [e.target.id[0], e.target.id[2]]
-        @inputer.input pos, @piece
+        play.pos = Pos.pos2int [e.target.id[0], e.target.id[2]]
+        play.next()
 
 class Cpu extends Player
-
-class SampleAI
+  decide_pos: ()->
 
 class PlayerCreater
   @make_players: (num, judge)->
@@ -164,7 +175,7 @@ class Board
     @cells[@height/2][@width/2]     = new Cell(0)
     @cells[@height/2-1][@width/2-1] = new Cell(0)
     @cells[@height/2][@width/2-1]   = new Cell(1)
-    @cells[@height/2-1][@width/2]     = new Cell(1)
+    @cells[@height/2-1][@width/2]   = new Cell(1)
 
 # Cell: オセロのマスを生成するクラス,置かれているピースの情報を知っている {{{
 class Cell
@@ -186,22 +197,22 @@ class Color
 
 # Judge: 正確にゲームを運べるようにボードへの操作をする {{{
 class Judge
-  constructor: (@rule, @board)->
-    @outputer = new Html
+  constructor: (@rule)->
+    @board = @rule.board
 
   # 8方向捜索
   reverse: (pos, piece)->
     result = false
-    return result unless @rule.is_puttable pos, @board
+    return result unless @rule.is_puttable pos
     for i in [-1..1]
       for j in [-1..1]
         continue if i is 0 and j is 0
-        result = true if @_reverse_piece pos, [i, j], @board.cells, piece
-    @outputer.update_board @board
+        result = true if @_reverse_piece pos, [i, j], piece
     result
 
-  _reverse_piece: (pos, dir, cells, piece)->
-    data = @rule.is_reverseble pos, dir, cells, piece
+  _reverse_piece: (pos, dir, piece)->
+    cells = @board.cells
+    data = @rule.is_reverseble pos, dir, piece
     return false if not data['flag'] or data['cnt'] is 0
     cnt = data['cnt']
     [[hx, hy], [x, y]] = [pos, dir]
@@ -217,14 +228,16 @@ class Rule
   constructor: ()->
     @piece_num = @b_width * @b_height
     @user_piece_num = @piece_num / @player_num
+    @board = new Board this
 
-  is_puttable: (pos, board)->
+  is_puttable: (pos)->
     [x, y] = pos
     return false unless @_is_inboard(pos)
-    return false if @_is_putted(board.cells[x][y].piece)
+    return false if @_is_putted(@board.cells[x][y].piece)
     true
 
-  is_reverseble: (pos, dir, cells, piece)->
+  is_reverseble: (pos, dir, piece)->
+    cells = @board.cells
     [[px, py], [x, y]] = [pos, dir]
     cnt = 0
     loop
@@ -289,7 +302,8 @@ class Debug
 window.othello = new Othello
 $ ->
   $('#start').click ->
-    window.othello.exec()
+    window.othello.run()
+
   $('#reset').click ->
-    window.othello.reset()
+    window.othello.ready()
 

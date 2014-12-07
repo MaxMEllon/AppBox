@@ -36,22 +36,17 @@ class Color {
 ' }
 
 class Ready {
-  +start()
+  +exec()
 }
-
 class Play {
-  +next()
+  +exec()
+  -next()
 }
-
 class Replay {
-  +load()
-  +play(interval: Integer)
-  +next()
-  +prev()
+  +exec()
 }
-
 class Result {
-  +end
+  +exec()
 }
 
 ' Outputinterface {{{
@@ -73,18 +68,16 @@ class Html {
 ' Player {{{
 abstract Player {
   +{abstract} piece
-  +{abstract} put_piece()
 }
 
 class User {
   +piece
-  +put_piece()
+  +dicide_pos()
 }
 
 class Cpu {
   +piece
   +dicide_pos()
-  +put_piece()
 }
 
 abstract Strategy {
@@ -107,13 +100,13 @@ class Judge {
 
 ' Rule {{{
 abstract Rule {
-  +{abstruct} piece_num: Integer
-  +{abstruct} board_width: Integer
-  +{abstruct} board_height: Integer
+  +{abstract} piece_num: Integer
+  +{abstract} board_width: Integer
+  +{abstract} board_height: Integer
 
-  +{abstruct} is_puttable?(pos: [x, y]): Bool
-  +{abstruct} is_reverseble?(pos: [x, y], piece: Piece): Bool
-  +{abstruct} is_same_piece?(piece: Piece, piece: Piece): Bool
+  +{abstract} is_puttable?(pos: [x, y]): Bool
+  +{abstract} is_reverseble?(pos: [x, y], piece: Piece): Bool
+  +{abstract} is_same_piece?(piece: Piece, piece: Piece): Bool
 }
 
 class NormalRule {
