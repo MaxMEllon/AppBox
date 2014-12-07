@@ -1,13 +1,13 @@
 @startuml{othello.png}
 
 class Othello {
-  rule: Rule
+  +rule: Rule
 }
 
 abstract GameState {
-  board: Board
-  judge: Judge
-  players :Player[]
+  +board: Board
+  +judge: Judge
+  +players :Player[]
 }
 
 class Board {
@@ -107,13 +107,13 @@ class Judge {
 
 ' Rule {{{
 abstract Rule {
-  +{abstruct}piece_num: Integer
-  +{abstruct}board_width: Integer
-  +{abstruct}board_height: Integer
+  +{abstruct} piece_num: Integer
+  +{abstruct} board_width: Integer
+  +{abstruct} board_height: Integer
 
-  +{abstruct}is_puttable?(pos: [x, y]): Bool
-  +{abstruct}is_reverseble?(pos: [x, y], piece: Piece): Bool
-  +{abstruct}is_same_piece?(piece: Piece, piece: Piece): Bool
+  +{abstruct} is_puttable?(pos: [x, y]): Bool
+  +{abstruct} is_reverseble?(pos: [x, y], piece: Piece): Bool
+  +{abstruct} is_same_piece?(piece: Piece, piece: Piece): Bool
 }
 
 class NormalRule {
