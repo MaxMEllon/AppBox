@@ -28,12 +28,12 @@ class Color {
   colors: String[]
 }
 
-class Pos {
-  +{static} pos2id(): String
-  +{static} id2pos(): [x, y]
-  +{static} pos2int(): [x, y]
-  +{static} calc_pos(): [height, width]
-}
+' class Pos {
+'   +{static} pos2id(): String
+'   +{static} id2pos(): [x, y]
+'   +{static} pos2int(): [x, y]
+'   +{static} calc_pos(): [height, width]
+' }
 
 class Ready {
   +start()
@@ -100,8 +100,8 @@ class PlayerCreater {
 ' }}}
 
 class Judge {
-  -piece: Piece
-  +reverce()
+  -rule: Rule
+  +reverce(piece: Piece, pos: [x, y]): Bool
   -reverce_piece()
 }
 
@@ -112,8 +112,8 @@ abstract Rule {
   +{abstruct}board_height: Integer
 
   +{abstruct}is_puttable?(pos: [x, y]): Bool
-  +{abstruct}is_reverseble?(pos: [x, y], piece: Piece)
-  +{abstruct}is_same_piece?(piece: Piece, piece: Piece)
+  +{abstruct}is_reverseble?(pos: [x, y], piece: Piece): Bool
+  +{abstruct}is_same_piece?(piece: Piece, piece: Piece): Bool
 }
 
 class NormalRule {
