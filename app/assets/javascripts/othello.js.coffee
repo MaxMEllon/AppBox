@@ -8,8 +8,8 @@ class Othello
     @state.exec()
 
   ready: ->
-    rule_name  = $('#rule')[0].value
-    @rule      = RuleCreater.make_rule rule_name
+    Html.reset_html()
+    @rule      = RuleCreater.make_rule Rule.get_rule_name()
     @judge     = new Judge @rule
     @state = new Ready @rule, @judge
     @state.exec()
@@ -34,7 +34,6 @@ class Play extends GameState
     @players[@order % @rule.player_num].decide_pos @
 
   next: ->
-    console.debug "clicked : ", @pos, @order
     piece = @players[@order % @rule.player_num].piece
     if @judge.reverse @pos, piece
       Debug.html '[' + @order + ']' + @pos + ':' + piece.color
@@ -77,6 +76,10 @@ class Html extends OutputInterface
 
   constructor: ()->
     @image_size = 50
+
+  @reset_html: ()->
+     $('.piece').remove()
+     $('iframe:first').contents().find('li').remove()
 
   set_cell: (piece, pos)->
     [x, y] = Pos.calc_pos pos, @image_size
@@ -151,9 +154,7 @@ class PlayerCreater
     players = []
     for k in [0...num]
       # TODO: ここでHTMLの要素参照してplayer_type取得
-      console.debug judge
       players.push PlayerCreater.make_player 'user', judge, k
-    console.debug players
     players
 
   @make_player: (type, judge, order)->
@@ -229,6 +230,9 @@ class Rule
     @piece_num = @b_width * @b_height
     @user_piece_num = @piece_num / @player_num
     @board = new Board this
+
+  @get_rule_name: ->
+    return $('#rule')[0].value
 
   is_puttable: (pos)->
     [x, y] = pos
