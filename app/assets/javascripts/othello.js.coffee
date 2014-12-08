@@ -2,16 +2,20 @@ window.othello = {}
 
 # Othello 各インスタンスを生成, オセロの実行を行う{{{
 class Othello
+  ready: ->
+    Html.reset_html()
+    @rule = RuleCreater.make_rule Rule.get_name()
+    @judge = new Judge @rule
+    @state = new Ready @rule, @judge
+    @state.exec()
+
   run: ->
     @ready()
     @state = new Play @rule, @judge
     @state.exec()
 
-  ready: ->
-    Html.reset_html()
-    @rule      = RuleCreater.make_rule Rule.get_rule_name()
-    @judge     = new Judge @rule
-    @state = new Ready @rule, @judge
+  replay: ->
+    @state = new Replay @rule, @judge
     @state.exec()
 # }}}
 
@@ -19,7 +23,7 @@ class Othello
 class GameState
   constructor: (@rule, @judge)->
     @board = @rule.board
-    @players = PlayerCreater.make_players @rule.player_num, @judge
+    @players = PlayerCreater.make_players @rule
     @outputer = new Html
     @pos = []
     @order = 0
@@ -78,8 +82,8 @@ class Html extends OutputInterface
     @image_size = 50
 
   @reset_html: ()->
-     $('.piece').remove()
-     $('iframe:first').contents().find('li').remove()
+    $('.piece').remove()
+    $('iframe:first').contents().find('li').remove()
 
   set_cell: (piece, pos)->
     [x, y] = Pos.calc_pos pos, @image_size
@@ -133,10 +137,10 @@ class Pos
 
 # Player ボードにコマを置くクラス {{{
 class Player
-  constructor: (judge, @order)->
+  constructor: (@rule, @order)->
     @piece     = new Piece order
 
-  decide_pos: ()->
+  decide_pos: (play)->
 
 class User extends Player
   decide_pos: (play)->
@@ -147,20 +151,45 @@ class User extends Player
         play.next()
 
 class Cpu extends Player
-  decide_pos: ()->
+  constructor: (@rule, @order)->
+    super @rule, @order
+    @ai = new Ai(new Strategy @rule.board)
+    console.debug @order, @ai
+
+  decide_pos: (play)->
+    play.pos = @ai.stratagem()
+    play.next()
 
 class PlayerCreater
-  @make_players: (num, judge)->
+  @make_players: (@rule)->
     players = []
-    for k in [0...num]
+    for k in [0...@rule.player_num]
       # TODO: ここでHTMLの要素参照してplayer_type取得
-      players.push PlayerCreater.make_player 'user', judge, k
+      players.push PlayerCreater.make_player 'user', @rule, k
     players
 
-  @make_player: (type, judge, order)->
+  @make_player: (type, rule, order)->
     switch type
-      when 'user' then new User judge, order
-      when 'cpu'  then new Cpu  judge, order
+      when 'user' then new User @rule, order
+      when 'cpu'  then new Cpu  @rule, order
+# }}}
+
+# Ai, Strategy {{{
+class Ai
+  constracter: (strategy)->
+    @strategy = strategy
+    console.debug @strategy
+  stratagem: ->
+    # @strategy.exec()
+    return [3, 5]
+
+class Strategy
+  constracter: (@board)->
+  exec: ->
+    return [3, 4]
+
+class NormalStrategy extends Strategy
+  exec: ->
 # }}}
 
 # Board オセロの各マス目を生成するクラス {{{
@@ -178,12 +207,12 @@ class Board
     @cells[@height/2][@width/2-1]   = new Cell(1)
     @cells[@height/2-1][@width/2]   = new Cell(1)
 
-# Cell: オセロのマスを生成するクラス,置かれているピースの情報を知っている {{{
+# Cell: マスのクラス {{{
 class Cell
   constructor: (order = -1)->
     @piece = new Piece(order)
 #   }}}
-# Piece: ピースを生成するクラス, 自分のピースの種類を知っている {{{
+# Piece: ピースクラス {{{
 class Piece
   constructor: (order)->
     return @color = 'void' if order is -1
@@ -231,7 +260,7 @@ class Rule
     @user_piece_num = @piece_num / @player_num
     @board = new Board this
 
-  @get_rule_name: ->
+  @get_name: ->
     return $('#rule')[0].value
 
   is_puttable: (pos)->
