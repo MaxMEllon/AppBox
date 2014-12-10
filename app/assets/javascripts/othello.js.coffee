@@ -35,7 +35,9 @@ class Ready extends GameState
 
 class Play extends GameState
   exec: ->
-    @players[@order % @rule.player_num].decide_pos @
+    return true if @is_end()
+    player = @players[@order % @rule.player_num]
+    player.decide_pos @, player.piece
 
   next: ->
     piece = @players[@order % @rule.player_num].piece
@@ -43,6 +45,27 @@ class Play extends GameState
       Debug.html '[' + @order + ']' + @pos + ':' + piece.color
       @order++
     @outputer.update_board @board
+    @exec()
+
+  result: (black_num, white_num)->
+    if black_num == white_num
+      alert '引き分け'
+    else if black_num > white_num
+      alert "#{black_num}個で黒の勝ち"
+    else
+      alert "#{white_num}個で白の勝ち"
+
+  is_end: ->
+    black = white = 0
+    for x in [0...@rule.b_height]
+      for y in [0...@rule.b_width]
+        black++ if @board.cells[x][y].piece.color is 'black'
+        white++ if @board.cells[x][y].piece.color is 'white'
+    if black + white >= @rule.piece_num
+      @result black, white
+      return true
+    else
+      return false
 
 class Reset extends GameState
   exec: ->
@@ -140,10 +163,10 @@ class Player
   constructor: (@rule, @order)->
     @piece     = new Piece order
 
-  decide_pos: (play)->
+  decide_pos: (play, piece)->
 
 class User extends Player
-  decide_pos: (play)->
+  decide_pos: (play, piece)->
     pieces = $('.piece')
     for piece in pieces
       piece.onclick = (e)=>
@@ -152,12 +175,12 @@ class User extends Player
 
 class Cpu extends Player
   constructor: (@rule, @order)->
-    super @rule, @order
-    @ai = new Ai(new Strategy @rule.board)
-    console.debug @order, @ai
+    strategy = new Strategy rule.board
+    @ai = new Ai strategy, rule
+    @piece = new Piece order
 
-  decide_pos: (play)->
-    play.pos = @ai.stratagem()
+  decide_pos: (play, piece)->
+    play.pos = @ai.stratagem piece
     play.next()
 
 class PlayerCreater
@@ -165,7 +188,8 @@ class PlayerCreater
     players = []
     for k in [0...@rule.player_num]
       # TODO: ここでHTMLの要素参照してplayer_type取得
-      players.push PlayerCreater.make_player 'user', @rule, k
+      players.push PlayerCreater.make_player 'cpu', @rule, k if k == 0
+      players.push PlayerCreater.make_player 'user', @rule, k if k == 1
     players
 
   @make_player: (type, rule, order)->
@@ -176,17 +200,19 @@ class PlayerCreater
 
 # Ai, Strategy {{{
 class Ai
-  constracter: (strategy)->
-    @strategy = strategy
-    console.debug @strategy
-  stratagem: ->
-    # @strategy.exec()
-    return [3, 5]
+  constracter: (@strategy, @rule)->
+    console.debug @rule
+
+  stratagem: (piece)->
+    pos = [Math.floor(Math.random()*8), Math.floor(Math.random()*8)]
+    console.debug piece, pos
+    pos
 
 class Strategy
   constracter: (@board)->
+
   exec: ->
-    return [3, 4]
+    pos = [Math.floor(Math.random()*8), Math.floor(Math.random()*8)]
 
 class NormalStrategy extends Strategy
   exec: ->
